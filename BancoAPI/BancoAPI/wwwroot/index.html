@@ -1,0 +1,980 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATLANTA S.A. — Sistema Bancario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{--bg:#0b0c0f;--bg2:#12141a;--bg3:#1a1d26;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--accent:#00e5c3;--accent2:#0097ff;--accent3:#f7b733;--danger:#ff4d4d;--success:#00e5a0;--text:#e8eaf0;--muted:#6b7082;--muted2:#9095a8;--fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;--r:12px;--rs:7px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;overflow-x:hidden;}
+#toasts{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+.toast{padding:12px 18px;border-radius:var(--rs);font-size:13px;font-weight:500;max-width:320px;pointer-events:auto;transform:translateX(120%);transition:transform 0.35s cubic-bezier(.22,.68,0,1.2);border-left:3px solid;}
+.toast.show{transform:translateX(0);}
+.toast.success{background:rgba(0,229,160,0.1);border-color:var(--success);color:#a0ffd9;}
+.toast.error{background:rgba(255,77,77,0.1);border-color:var(--danger);color:#ffb0b0;}
+.toast.info{background:rgba(0,151,255,0.1);border-color:var(--accent2);color:#a0d4ff;}
+.toast.warn{background:rgba(247,183,51,0.1);border-color:var(--accent3);color:#ffe0a0;}
+/* LOGIN */
+#screen-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(0,229,195,0.08) 0%,transparent 70%);}
+.login-wrap{width:380px;}
+.login-logo{font-family:var(--fh);font-size:32px;font-weight:800;color:var(--accent);letter-spacing:-1px;text-align:center;margin-bottom:6px;}
+.login-sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:36px;text-transform:uppercase;letter-spacing:3px;font-family:var(--fm);}
+.login-card{background:var(--bg2);border:1px solid var(--border2);border-radius:18px;padding:36px;box-shadow:0 40px 80px rgba(0,0,0,0.6);}
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:7px;font-family:var(--fm);}
+.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:11px 14px;border-radius:var(--rs);font-family:var(--fb);font-size:14px;outline:none;transition:border 0.2s;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field select option{background:var(--bg3);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 20px;border-radius:var(--rs);border:none;cursor:pointer;font-family:var(--fb);font-size:13px;font-weight:500;transition:all 0.2s;text-decoration:none;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#000;}.btn-primary:hover{background:#00ccad;}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border2);}.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:rgba(255,77,77,0.15);color:var(--danger);border:1px solid rgba(255,77,77,0.3);}.btn-danger:hover{background:rgba(255,77,77,0.25);}
+.btn-ok{background:rgba(0,229,160,0.12);color:var(--success);border:1px solid rgba(0,229,160,0.25);padding:6px 12px;font-size:12px;border-radius:5px;}
+.btn-ok:hover{background:rgba(0,229,160,0.22);}
+.btn-no{background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.25);padding:6px 12px;font-size:12px;border-radius:5px;}
+.btn-no:hover{background:rgba(255,77,77,0.2);}
+.btn-block{width:100%;}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+/* SHELL */
+#screen-app{display:none;min-height:100vh;}
+.sidebar{position:fixed;top:0;left:0;width:230px;height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;overflow-y:auto;}
+.sb-logo{padding:24px 22px 20px;font-family:var(--fh);font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-0.5px;border-bottom:1px solid var(--border);}
+.sb-logo span{color:var(--muted);font-size:11px;font-weight:400;display:block;margin-top:2px;letter-spacing:1px;font-family:var(--fm);}
+.sb-section{padding:18px 14px 6px;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-family:var(--fm);}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--muted2);cursor:pointer;border-radius:var(--rs);margin:1px 8px;transition:all 0.15s;font-size:13.5px;border:none;background:none;width:calc(100% - 16px);text-align:left;font-family:var(--fb);}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:rgba(0,229,195,0.1);color:var(--accent);}
+.sb-bot{margin-top:auto;padding:16px;border-top:1px solid var(--border);}
+.user-chip{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--rs);}
+.user-av{width:32px;height:32px;border-radius:50%;background:rgba(0,229,195,0.15);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;}
+.main{margin-left:230px;padding:32px 36px;min-height:100vh;}
+.page{display:none;}.page.active{display:block;}
+.page-title{font-family:var(--fh);font-size:26px;font-weight:700;margin-bottom:6px;}
+.page-sub{color:var(--muted);font-size:13px;margin-bottom:28px;}
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc-t::before{background:var(--accent)}.sc-b::before{background:var(--accent2)}.sc-a::before{background:var(--accent3)}.sc-r::before{background:var(--danger)}
+.sl{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-family:var(--fm);margin-bottom:8px;}
+.sv{font-family:var(--fh);font-size:28px;font-weight:700;}
+.sm{font-size:11px;color:var(--muted);margin-top:5px;}
+/* TABLES */
+.tw{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.th{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.th-t{font-family:var(--fh);font-size:15px;font-weight:600;}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:11px 16px;text-align:left;font-size:11px;font-family:var(--fm);text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg3);font-weight:400;}
+tbody td{padding:13px 16px;border-bottom:1px solid var(--border);font-size:13px;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(255,255,255,0.02);}
+.mono{font-family:var(--fm);font-size:12px;}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;font-family:var(--fm);}
+.b-ok{background:rgba(0,229,160,0.12);color:#00e5a0;}
+.b-no{background:rgba(255,77,77,0.12);color:#ff6b6b;}
+.b-w{background:rgba(247,183,51,0.12);color:#f7b733;}
+.b-i{background:rgba(0,151,255,0.12);color:#4db8ff;}
+.b-m{background:rgba(255,255,255,0.06);color:var(--muted2);}
+/* CARDS */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;margin-bottom:28px;}
+.account-card{background:linear-gradient(135deg,#1a1f2e 0%,#12141a 100%);border:1px solid var(--border2);border-radius:16px;padding:24px;position:relative;overflow:hidden;transition:transform 0.2s;}
+.account-card:hover{transform:translateY(-3px);}
+.account-card::after{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,195,0.08) 0%,transparent 70%);}
+.card-chip{width:36px;height:26px;background:linear-gradient(135deg,#f7b733,#e8a020);border-radius:5px;margin-bottom:24px;display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:4px;}
+.card-chip span{background:rgba(0,0,0,0.15);border-radius:2px;}
+/* FORMS */
+.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:28px;max-width:480px;}
+.form-card h3{font-family:var(--fh);font-size:18px;font-weight:600;margin-bottom:22px;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+/* CHARTS */
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:22px;}
+.chart-title{font-family:var(--fh);font-size:15px;font-weight:600;margin-bottom:16px;}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:22px;}
+/* SIM */
+.sim-log{background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;font-family:var(--fm);font-size:11px;color:var(--muted2);max-height:220px;overflow-y:auto;margin-top:14px;line-height:1.8;}
+.sim-log .ok{color:var(--success);}
+.progress-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.1s;width:0%;}
+/* FRAUD */
+.fraud-item{display:flex;align-items:flex-start;gap:14px;padding:16px;background:rgba(255,77,77,0.05);border:1px solid rgba(255,77,77,0.15);border-radius:var(--rs);margin-bottom:10px;}
+.fraud-icon{width:36px;height:36px;border-radius:8px;background:rgba(255,77,77,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+/* MISC */
+.row{display:flex;gap:20px;align-items:flex-start;}
+.col{flex:1;min-width:0;}
+.tabs{display:flex;gap:4px;margin-bottom:22px;background:var(--bg2);padding:5px;border-radius:10px;border:1px solid var(--border);width:fit-content;}
+.tab{padding:7px 18px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--muted2);transition:all 0.2s;border:none;background:none;font-family:var(--fb);}
+.tab.active{background:var(--bg3);color:var(--text);}
+.cc-vis{width:320px;height:190px;border-radius:16px;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);border:1px solid rgba(255,255,255,0.1);padding:24px;position:relative;overflow:hidden;flex-shrink:0;}
+.cc-vis::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,195,0.15),transparent);}
+input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+
+<!-- LOGIN -->
+<div id="screen-login">
+  <div class="login-wrap">
+    <div class="login-logo">ATLANTA</div>
+    <div class="login-sub">Sistema Bancario S.A.</div>
+    <div class="login-card">
+      <div class="field"><label>Tipo de acceso</label>
+        <select id="lRol"><option value="CAJERO">Administrador / Cajero</option><option value="CLIENTE">Cliente</option></select>
+      </div>
+      <div class="field"><label>Usuario / ID de Cliente</label><input type="text" id="lUser" placeholder="admin  ó  ID numérico" autocomplete="off"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="lPass" placeholder="••••••••"></div>
+      <button class="btn btn-primary btn-block" id="btnLogin" onclick="doLogin()">Ingresar al sistema</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="screen-app">
+  <nav class="sidebar">
+    <div class="sb-logo">ATLANTA <span id="sbRol">S.A.</span></div>
+    <div id="sbNav"></div>
+    <div class="sb-bot">
+      <div class="user-chip"><div class="user-av" id="sbAv">A</div>
+        <div><div style="font-size:12px;font-weight:500;" id="sbName">—</div><div style="font-size:11px;color:var(--muted);font-family:var(--fm);" id="sbRole">—</div></div>
+      </div>
+      <button class="btn btn-danger btn-block" style="margin-top:10px;" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </nav>
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page" id="pg-dashboard">
+      <div class="page-title">Panel General</div><div class="page-sub">Resumen operativo en tiempo real</div>
+      <div class="stats-grid" id="dashStats"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">Movimientos últimos 7 días</div><div style="position:relative;height:220px;"><canvas id="cMovs" role="img" aria-label="Movimientos recientes"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Tipos de movimiento</div><div style="position:relative;height:220px;"><canvas id="cTipos" role="img" aria-label="Tipos de movimiento"></canvas></div></div>
+      </div>
+      <div class="tw"><div class="th"><span class="th-t">Últimas transacciones</span></div>
+        <table><thead><tr><th>ID</th><th>Fecha</th><th>Cuenta</th><th>Tipo</th><th>Monto</th><th>Descripción</th></tr></thead>
+        <tbody id="dashTbl"></tbody></table>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div class="page" id="pg-clientes">
+      <div class="page-title">Gestión de Clientes</div><div class="page-sub">Crear, buscar y ver top clientes por patrimonio</div>
+      <div class="tabs">
+        <button class="tab active" onclick="stab('clientes','lista',this)">Lista / Top</button>
+        <button class="tab" onclick="stab('clientes','nuevo',this)">Nuevo cliente</button>
+      </div>
+      <div id="clientes-lista">
+        <div style="display:flex;gap:12px;margin-bottom:18px;">
+          <input style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:9px 14px;border-radius:var(--rs);flex:1;font-family:var(--fb);font-size:13px;outline:none;" id="busqCli" placeholder="Buscar por nombre, apellido o cédula..." oninput="filtrarCli()">
+          <button class="btn btn-secondary" onclick="cargarClientes()">↺</button>
+        </div>
+        <div class="tw"><table><thead><tr><th>ID</th><th>Cédula</th><th>Nombre</th><th>Apellido</th><th>Correo</th><th>Tel.</th><th>Cuentas</th><th>Patrimonio</th></tr></thead>
+        <tbody id="cliTbl"></tbody></table></div>
+      </div>
+      <div id="clientes-nuevo" style="display:none;">
+        <div class="form-card"><h3>Registrar nuevo cliente</h3>
+          <div class="fg2">
+            <div class="field"><label>Cédula</label><input type="text" id="nCedula" placeholder="001-123456-0000X"></div>
+            <div class="field"><label>Nombre</label><input type="text" id="nNombre" placeholder="Juan"></div>
+            <div class="field"><label>Apellido</label><input type="text" id="nApellido" placeholder="García"></div>
+            <div class="field"><label>Teléfono</label><input type="text" id="nTel" placeholder="+505 8000-0000"></div>
+            <div class="field"><label>Correo</label><input type="email" id="nCorreo" placeholder="juan@correo.com"></div>
+            <div class="field"><label>Dirección</label><input type="text" id="nDir" placeholder="Managua, Nicaragua"></div>
+          </div>
+          <button class="btn btn-primary" id="btnCrearCli" onclick="crearCliente()" style="margin-top:8px;">Crear cliente</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUENTAS -->
+    <div class="page" id="pg-cuentas">
+      <div class="page-title">Cuentas Bancarias</div><div class="page-sub">Gestionar y consultar cuentas</div>
+      <div class="tabs">
+        <button class="tab active" onclick="stab('cuentas','lista',this)">Mis cuentas</button>
+        <button class="tab" onclick="stab('cuentas','nueva',this)">Abrir cuenta</button>
+      </div>
+      <div id="cuentas-lista">
+        <div class="cards-grid" id="cuentasCards"></div>
+        <div class="tw" style="margin-top:20px;">
+          <div class="th"><span class="th-t">Historial de movimientos</span>
+            <select id="filtroMovCuenta" onchange="cargarHistorial()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:5px;font-family:var(--fm);font-size:12px;outline:none;">
+              <option value="">Todas las cuentas</option>
+            </select>
+          </div>
+          <table><thead><tr><th>ID Mov</th><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Monto</th></tr></thead>
+          <tbody id="histTbl"></tbody></table>
+        </div>
+      </div>
+      <div id="cuentas-nueva" style="display:none;">
+        <div class="form-card"><h3>Abrir nueva cuenta</h3>
+          <div class="field"><label>ID del Cliente</label><input type="number" id="ncIdCli" placeholder="ID numérico"></div>
+          <div class="field"><label>Tipo de cuenta</label>
+            <select id="ncTipo"><option value="Corriente">Corriente</option><option value="Ahorro">Ahorro</option><option value="Inversión">Inversión</option></select>
+          </div>
+          <div class="field"><label>Depósito inicial ($)</label><input type="number" id="ncDeposito" placeholder="0.00" min="0"></div>
+          <button class="btn btn-primary" id="btnAbrirCta" onclick="abrirCuenta()">Abrir cuenta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSFERENCIAS -->
+    <div class="page" id="pg-transferencias">
+      <div class="page-title">Depósitos, Retiros y Transferencias</div><div class="page-sub">Mover fondos entre cuentas</div>
+      <div class="row" style="gap:24px;align-items:flex-start;">
+        <div class="col" style="max-width:460px;">
+          <div class="tabs">
+            <button class="tab active" onclick="stab('trans','deposito',this)">Depósito</button>
+            <button class="tab" onclick="stab('trans','retiro',this)">Retiro</button>
+            <button class="tab" onclick="stab('trans','transferencia',this)">Transferencia</button>
+          </div>
+          <div id="trans-deposito">
+            <div class="form-card"><h3>Realizar depósito</h3>
+              <div class="field"><label>ID de cuenta destino</label><input type="number" id="depCuenta" placeholder="Ej. 1"></div>
+              <div class="field"><label>Monto ($)</label><input type="number" id="depMonto" placeholder="0.00" min="0.01" step="0.01"></div>
+              <button class="btn btn-primary" id="btnDep" onclick="doDeposito()">Confirmar depósito</button>
+            </div>
+          </div>
+          <div id="trans-retiro" style="display:none;">
+            <div class="form-card"><h3>Realizar retiro</h3>
+              <div class="field"><label>ID de cuenta</label><input type="number" id="retCuenta" placeholder="Ej. 1"></div>
+              <div class="field"><label>Monto ($)</label><input type="number" id="retMonto" placeholder="0.00" min="0.01" step="0.01"></div>
+              <button class="btn btn-primary" id="btnRet" onclick="doRetiro()">Confirmar retiro</button>
+            </div>
+          </div>
+          <div id="trans-transferencia" style="display:none;">
+            <div class="form-card"><h3>Transferencia entre cuentas</h3>
+              <div class="field"><label>Cuenta origen (ID)</label><input type="number" id="trfOrigen" placeholder="Ej. 1"></div>
+              <div class="field"><label>Cuenta destino (ID)</label><input type="number" id="trfDestino" placeholder="Ej. 2"></div>
+              <div class="field"><label>Monto ($)</label><input type="number" id="trfMonto" placeholder="0.00" min="0.01" step="0.01"></div>
+              <button class="btn btn-primary" id="btnTrf" onclick="doTransferencia()">Ejecutar transferencia</button>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="chart-card"><div class="chart-title">Últimas 10 operaciones</div><div style="position:relative;height:220px;"><canvas id="cOps" role="img" aria-label="Últimas operaciones"></canvas></div></div>
+          <div class="tw"><div class="th"><span class="th-t">Registro reciente</span></div>
+            <table><thead><tr><th>Hora</th><th>Tipo</th><th>Cuenta</th><th>Monto</th></tr></thead>
+            <tbody id="transRecTbl"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TARJETAS -->
+    <div class="page" id="pg-tarjetas">
+      <div class="page-title">Tarjetas de Crédito</div><div class="page-sub">Emitir y gestionar tarjetas</div>
+      <div class="tabs">
+        <button class="tab active" onclick="stab('tarjetas','lista',this)">Tarjetas activas</button>
+        <button class="tab" onclick="stab('tarjetas','emitir',this)">Emitir tarjeta</button>
+      </div>
+      <div id="tarjetas-lista"><div class="cards-grid" id="tarjetasCards"></div></div>
+      <div id="tarjetas-emitir" style="display:none;">
+        <div class="row" style="align-items:flex-start;gap:24px;">
+          <div class="form-card col" style="max-width:380px;"><h3>Emitir nueva tarjeta</h3>
+            <div class="field"><label>ID del cliente</label><input type="number" id="tcIdCli" placeholder="ID numérico" oninput="previewCard()"></div>
+            <div class="field"><label>Límite de crédito ($)</label><input type="number" id="tcLimite" placeholder="Ej. 5000" oninput="previewCard()"></div>
+            <div class="field"><label>Tipo</label>
+              <select id="tcTipo" onchange="previewCard()"><option value="VISA">VISA</option><option value="Mastercard">Mastercard</option><option value="AMEX">American Express</option></select>
+            </div>
+            <button class="btn btn-primary" id="btnEmitir" onclick="emitirTarjeta()">Emitir tarjeta</button>
+          </div>
+          <div style="padding-top:36px;">
+            <div class="cc-vis">
+              <div style="font-family:var(--fh);font-size:18px;font-weight:800;color:rgba(255,255,255,0.9);" id="pvBrand">VISA</div>
+              <div style="font-family:var(--fm);letter-spacing:3px;color:rgba(255,255,255,0.7);margin-top:28px;font-size:14px;" id="pvNum">•••• •••• •••• ••••</div>
+              <div style="display:flex;justify-content:space-between;margin-top:20px;">
+                <div style="font-family:var(--fm);font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;">Cliente <span id="pvCli">—</span></div>
+                <div style="text-align:right;"><div style="font-size:11px;color:rgba(255,255,255,0.5);">LÍMITE</div><div style="font-family:var(--fh);font-size:14px;color:var(--accent);" id="pvLimite">$0</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRÉSTAMOS ADMIN -->
+    <div class="page" id="pg-prestamos">
+      <div class="page-title">Préstamos</div><div class="page-sub">Solicitudes pendientes y aprobación</div>
+      <div id="prestamosWrap"></div>
+    </div>
+
+    <!-- FRAUDES -->
+    <div class="page" id="pg-fraudes">
+      <div class="page-title">Detección de Fraudes</div><div class="page-sub">Análisis heurístico — umbrales Big Data</div>
+      <div class="stats-grid" id="fraudeStats"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">Puntaje de riesgo por cuenta</div><div style="position:relative;height:230px;"><canvas id="cFraude" role="img" aria-label="Riesgo por cuenta"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Alertas por nivel</div><div style="position:relative;height:230px;"><canvas id="cFraudeTipo" role="img" aria-label="Alertas por nivel"></canvas></div></div>
+      </div>
+      <div id="fraudeAlertas"></div>
+    </div>
+
+    <!-- BIG DATA -->
+    <div class="page" id="pg-bigdata">
+      <div class="page-title">Simulación Big Data</div><div class="page-sub">Generar operaciones masivas para pruebas de carga</div>
+      <div class="row" style="gap:24px;align-items:flex-start;">
+        <div class="form-card col" style="max-width:420px;"><h3>Configurar simulación</h3>
+          <div class="field"><label>Número de depósitos</label><input type="number" id="simN" value="100" min="1" max="10000"></div>
+          <div class="field"><label>Monto mínimo ($)</label><input type="number" id="simMin" value="100"></div>
+          <div class="field"><label>Monto máximo ($)</label><input type="number" id="simMax" value="100000"></div>
+          <div class="field"><label>Velocidad</label>
+            <select id="simVel"><option value="0">Máxima</option><option value="30">Rápida (30ms)</option><option value="100" selected>Normal (100ms)</option><option value="300">Lenta (300ms)</option></select>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button class="btn btn-primary" id="btnSimStart" onclick="iniciarSim()">▶ Iniciar</button>
+            <button class="btn btn-danger" id="btnSimStop" onclick="detenerSim()" disabled>■ Detener</button>
+          </div>
+          <div id="simProgress" style="display:none;margin-top:18px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;"><span id="simPct">0%</span><span id="simCount">0/0</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="simBar"></div></div>
+          </div>
+          <div class="sim-log" id="simLog" style="display:none;"></div>
+        </div>
+        <div class="col">
+          <div class="chart-card"><div class="chart-title">Montos en tiempo real</div><div style="position:relative;height:240px;"><canvas id="cSim" role="img" aria-label="Simulación en tiempo real"></canvas></div></div>
+          <div class="stats-grid" id="simStats" style="margin-top:16px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDITORÍA -->
+    <div class="page" id="pg-auditoria">
+      <div class="page-title">Auditoría del Sistema</div><div class="page-sub">Tabla Auditoria — triggers automáticos de SQL Server</div>
+      <div class="stats-grid" id="auditStats"></div>
+      <div class="chart-card"><div class="chart-title">Operaciones por hora (últimas 24h)</div><div style="position:relative;height:200px;"><canvas id="cAudit" role="img" aria-label="Auditoría por hora"></canvas></div></div>
+      <div class="tw">
+        <div class="th"><span class="th-t">Log de auditoría</span>
+          <div style="display:flex;gap:8px;">
+            <input id="auditQ" placeholder="Filtrar..." style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:6px 12px;border-radius:5px;font-size:12px;font-family:var(--fm);outline:none;width:180px;" oninput="filtrarAudit()">
+            <button class="btn btn-secondary" onclick="exportAudit()" style="font-size:12px;padding:6px 14px;">⬇ CSV</button>
+          </div>
+        </div>
+        <table><thead><tr><th>ID</th><th>Usuario</th><th>Tabla</th><th>Operación</th><th>Fecha</th><th>Registro</th></tr></thead>
+        <tbody id="auditTbl"></tbody></table>
+      </div>
+    </div>
+
+    <!-- RESUMEN FINANCIERO -->
+    <div class="page" id="pg-resumen">
+      <div class="page-title">Resumen Financiero</div><div class="page-sub">VW_ResumenFinanciero · Top 10 clientes · Estadísticas mensuales</div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">Top 10 clientes por patrimonio</div><div style="position:relative;height:280px;"><canvas id="cTop10" role="img" aria-label="Top 10 clientes"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Volumen mensual de movimientos</div><div style="position:relative;height:280px;"><canvas id="cMensual" role="img" aria-label="Volumen mensual"></canvas></div></div>
+      </div>
+      <div class="tw"><div class="th"><span class="th-t">Top 10 clientes por saldo total</span></div>
+        <table><thead><tr><th>#</th><th>Cliente</th><th>Total dinero</th></tr></thead>
+        <tbody id="top10Tbl"></tbody></table>
+      </div>
+    </div>
+
+    <!-- MIS PRÉSTAMOS CLIENTE -->
+    <div class="page" id="pg-misprestamos">
+      <div class="page-title">Mis Préstamos</div><div class="page-sub">Estado de solicitudes</div>
+      <div class="tabs">
+        <button class="tab active" onclick="stab('misprest','lista',this)">Mis solicitudes</button>
+        <button class="tab" onclick="stab('misprest','nueva',this)">Nueva solicitud</button>
+      </div>
+      <div id="misprest-lista">
+        <div class="tw"><table><thead><tr><th>ID</th><th>Monto</th><th>Plazo</th><th>Cuota/mes</th><th>Tasa</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody id="misPrestTbl"></tbody></table></div>
+      </div>
+      <div id="misprest-nueva" style="display:none;">
+        <div class="form-card"><h3>Solicitar préstamo personal</h3>
+          <div class="field"><label>Monto solicitado ($)</label><input type="number" id="pMonto" placeholder="Mín. $100" oninput="simPrest()"></div>
+          <div class="field"><label>Plazo (meses)</label><input type="number" id="pPlazo" placeholder="Ej. 24" min="1" max="360" oninput="simPrest()"></div>
+          <div id="pSimRes" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:14px;margin-bottom:18px;display:none;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Simulación (tasa 15% anual)</div>
+            <div style="display:flex;gap:24px;">
+              <div><div style="font-size:11px;color:var(--muted);">Cuota mensual</div><div style="font-family:var(--fh);font-size:20px;color:var(--accent);" id="pCuota">—</div></div>
+              <div><div style="font-size:11px;color:var(--muted);">Total a pagar</div><div style="font-family:var(--fh);font-size:20px;" id="pTotal">—</div></div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btnSolPrest" onclick="solPrestamo()">Enviar solicitud</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const API='/api/banco';
+let S={rol:'',id:0,nombre:''};
+let _clis=[],_auditAll=[],_transRec=[],_simRun=false;
+let CC={movs:null,tipos:null,ops:null,fraude:null,fraudeTipo:null,sim:null,audit:null,top10:null,mensual:null};
+
+// ── UTILS ──
+function toast(msg,t='info'){
+  const c=document.getElementById('toasts'),d=document.createElement('div');
+  d.className=`toast ${t}`;d.textContent=msg;c.appendChild(d);
+  setTimeout(()=>d.classList.add('show'),10);
+  setTimeout(()=>{d.classList.remove('show');setTimeout(()=>d.remove(),400);},4500);
+}
+function fmt(n){return '$'+parseFloat(n||0).toLocaleString('es-NI',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtD(s){return s?new Date(s).toLocaleString('es-NI'):'—';}
+function setBtn(id,on,txt){const b=document.getElementById(id);if(!b)return;b.disabled=on;b.textContent=on?'Procesando...':txt;}
+function badge(t){
+  const m={DEPOSITO:'ok',TRANSFERENCIA:'i',RETIRO:'w',Activa:'ok',Activo:'ok',Pendiente:'w',Aprobado:'ok',Rechazado:'no',Inactiva:'no',Bloqueada:'no',Alto:'no',Medio:'w',Bajo:'ok',INSERT:'i',UPDATE:'w',DELETE:'no',Normal:'ok'};
+  return `<span class="badge b-${m[t]||'m'}">${t}</span>`;
+}
+async function api(path,method='GET',body=null){
+  const o={method,headers:{'Content-Type':'application/json'}};
+  if(body) o.body=JSON.stringify(body);
+  const r=await fetch(API+path,o);
+  const d=await r.json().catch(()=>({}));
+  return {ok:r.ok,status:r.status,data:d};
+}
+
+// ── MOCKS para demo sin backend ──
+function mockMovs(){
+  const ts=['DEPOSITO','TRANSFERENCIA','RETIRO'];
+  return Array.from({length:20},(_,i)=>({idMovimiento:i+1,fechaMovimiento:new Date(Date.now()-i*7200000).toISOString(),
+    tipoMovimiento:ts[i%3],monto:+(Math.random()*90000+100).toFixed(2),descripcion:'Operación Big Data',idCuenta:1}));
+}
+function mockClis(){
+  const ns=[['Dylan','Ruiz'],['Ana','López'],['Carlos','Pérez'],['María','Torres'],['José','Morales']];
+  return ns.map(([n,a],i)=>({idCliente:i+1,cedula:`00${i+1}-123456-000X`,nombre:n,apellido:a,
+    correo:`${n.toLowerCase()}@banco.com`,telefono:'+505 8000-000'+(i+1),
+    patrimonio:+(Math.random()*5000000+10000).toFixed(2),cuentas:Math.floor(Math.random()*3)+1}));
+}
+function mockCuentas(id){
+  return [{idCuenta:id,numeroCuenta:`CTA-00${id}`,tipoCuenta:'Corriente',saldo:+(Math.random()*1000000+5000).toFixed(2),estado:'Activa',idCliente:id}];
+}
+function mockPrest(){
+  return Array.from({length:3},(_,i)=>({idPrestamo:i+1,idCliente:i+1,monto:+(Math.random()*50000+1000).toFixed(2),
+    tasaInteres:15,plazoMeses:[12,24,36][i],cuotaMensual:+(Math.random()*2000+200).toFixed(2),
+    estado:'Pendiente',fechaPrestamo:new Date(Date.now()-i*86400000).toISOString(),nombreCliente:'Cliente '+(i+1)}));
+}
+function mockTarjetas(){
+  return [{idTarjeta:1,idCliente:S.id||1,numeroTarjeta:'4532 •••• •••• 7891',tipoTarjeta:'VISA',limiteCredito:5000,saldoUtilizado:1200,disponible:3800,estado:'Activa'},
+          {idTarjeta:2,idCliente:S.id||1,numeroTarjeta:'5412 •••• •••• 3344',tipoTarjeta:'Mastercard',limiteCredito:8000,saldoUtilizado:3400,disponible:4600,estado:'Activa'}];
+}
+function mockAudit(){
+  const ops=['INSERT','UPDATE','DELETE'];
+  const tabs=['Clientes','Cuentas','Prestamos'];
+  return Array.from({length:20},(_,i)=>({idAuditoria:i+1,usuarioSistema:'dbo',tablaAfectada:tabs[i%3],
+    operacion:ops[i%3],fecha:new Date(Date.now()-i*3600000).toISOString(),registro:'Modificación en registro'}));
+}
+
+// ── LOGIN ──
+async function doLogin(){
+  const rol=document.getElementById('lRol').value;
+  const user=document.getElementById('lUser').value.trim();
+  const pass=document.getElementById('lPass').value.trim();
+  if(!user){toast('Ingrese usuario o ID','error');return;}
+  setBtn('btnLogin',true);
+  try{
+    const {ok,data}=await api('/login','POST',{rol,usuario:user,clave:pass});
+    if(ok){S={rol:data.rol,id:data.idUsuario||0,nombre:data.nombre||user};arrancar();}
+    else{
+      if(rol==='CAJERO'&&user==='admin'&&pass==='123'){S={rol:'CAJERO',id:0,nombre:'Administrador'};arrancar();toast('Modo demo','warn');}
+      else if(rol==='CLIENTE'&&!isNaN(+user)){S={rol:'CLIENTE',id:+user,nombre:'Cliente #'+user};arrancar();toast('Modo demo','warn');}
+      else toast(data.message||'Credenciales incorrectas','error');
+    }
+  }catch{
+    if(rol==='CAJERO'&&user==='admin'&&pass==='123'){S={rol:'CAJERO',id:0,nombre:'Administrador'};arrancar();toast('Sin conexión — modo demo','warn');}
+    else if(rol==='CLIENTE'&&!isNaN(+user)){S={rol:'CLIENTE',id:+user,nombre:'Cliente #'+user};arrancar();toast('Sin conexión — modo demo','warn');}
+    else toast('Error de conexión con el servidor','error');
+  }
+  setBtn('btnLogin',false,'Ingresar al sistema');
+}
+
+function arrancar(){
+  document.getElementById('screen-login').style.display='none';
+  document.getElementById('screen-app').style.display='block';
+  document.getElementById('sbAv').textContent=S.nombre[0].toUpperCase();
+  document.getElementById('sbName').textContent=S.nombre;
+  document.getElementById('sbRole').textContent=S.rol;
+  document.getElementById('sbRol').textContent=S.rol==='CAJERO'?'Admin':'Portal';
+  buildNav();
+}
+
+function buildNav(){
+  const nav=document.getElementById('sbNav');
+  const ico={
+    dashboard:'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z',
+    clientes:'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z',
+    cuentas:'M4 10h3v7H4zm6.5 0h3v7h-3zM2 19h20v3H2zm15-9h3v7h-3zM12 1L2 6v2h20V6z',
+    transferencias:'M7 16l-4-4m0 0l4-4m-4 4h18M17 8l4 4m0 0l-4 4m4-4H3',
+    tarjetas:'M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z',
+    prestamos:'M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z',
+    fraudes:'M12 2L1 21h22L12 2zm0 3.5l8.5 14.5h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z',
+    bigdata:'M3.5 18.5l6-6 4 4L22 6.92',
+    auditoria:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+    resumen:'M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z',
+    misprestamos:'M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z',
+  };
+  const admin=[['dashboard','Panel General'],['clientes','Clientes'],['cuentas','Cuentas'],['transferencias','Depósitos / Trans.'],['tarjetas','Tarjetas'],['prestamos','Préstamos'],['fraudes','Detección Fraudes'],['bigdata','Simulación Big Data'],['auditoria','Auditoría'],['resumen','Resumen Financiero']];
+  const cli=[['dashboard','Mi Panel'],['cuentas','Mis Cuentas'],['transferencias','Depósitos / Trans.'],['tarjetas','Mis Tarjetas'],['misprestamos','Mis Préstamos']];
+  const items=S.rol==='CAJERO'?admin:cli;
+  let h='<div class="sb-section">Módulos</div>';
+  items.forEach(([pg,lbl])=>{
+    h+=`<button class="nav-item" id="nav-${pg}" onclick="navTo('${pg}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${ico[pg]||''}"/></svg>${lbl}</button>`;
+  });
+  nav.innerHTML=h;
+  navTo('dashboard');
+}
+
+function navTo(pg){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('pg-'+pg)?.classList.add('active');
+  document.getElementById('nav-'+pg)?.classList.add('active');
+  const loaders={dashboard:loadDash,clientes:cargarClientes,cuentas:cargarCuentas,transferencias:loadTrans,
+    tarjetas:cargarTarjetas,prestamos:cargarPrestamos,fraudes:cargarFraudes,bigdata:loadBigData,
+    auditoria:cargarAuditoria,resumen:cargarResumen,misprestamos:cargarMisPrest};
+  if(loaders[pg]) loaders[pg]();
+}
+
+function stab(sect,sub,btn){
+  const ids=Array.from(document.querySelectorAll(`[id^="${sect}-"],[id^="misprest-"]`)).map(e=>e.id);
+  ids.forEach(id=>{if(document.getElementById(id))document.getElementById(id).style.display='none';});
+  const t=document.getElementById(sect+'-'+sub)||document.getElementById('misprest-'+sub);
+  if(t) t.style.display='block';
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── DASHBOARD ──
+async function loadDash(){
+  const {ok,data}=await api('/movimientos').catch(()=>({ok:false}));
+  const movs=ok?data:mockMovs();
+  const total=movs.reduce((a,m)=>a+(m.monto||0),0);
+  document.getElementById('dashStats').innerHTML=`
+    <div class="stat-card sc-t"><div class="sl">Transacciones</div><div class="sv">${movs.length}</div><div class="sm">últimas cargadas</div></div>
+    <div class="stat-card sc-b"><div class="sl">Volumen total</div><div class="sv">${fmt(total)}</div><div class="sm">en este rango</div></div>
+    <div class="stat-card sc-a"><div class="sl">Promedio</div><div class="sv">${fmt(total/movs.length)}</div><div class="sm">por transacción</div></div>
+    <div class="stat-card sc-r"><div class="sl">Alertas (>$80k)</div><div class="sv">${movs.filter(m=>m.monto>80000).length}</div><div class="sm">montos altos</div></div>`;
+  const dias={};
+  movs.forEach(m=>{const d=(m.fechaMovimiento||'').slice(0,10);dias[d]=(dias[d]||0)+(m.monto||0);});
+  const dk=Object.keys(dias).sort().slice(-7),dv=dk.map(k=>+dias[k].toFixed(2));
+  if(CC.movs) CC.movs.destroy();
+  CC.movs=new Chart(document.getElementById('cMovs'),{type:'line',
+    data:{labels:dk.map(d=>d.slice(5)),datasets:[{label:'Volumen',data:dv,borderColor:'#00e5c3',backgroundColor:'rgba(0,229,195,0.08)',fill:true,tension:0.4,pointBackgroundColor:'#00e5c3'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7082'}},y:{ticks:{color:'#6b7082',callback:v=>'$'+v.toLocaleString()}}}}});
+  const tipos={};
+  movs.forEach(m=>{const t=m.tipoMovimiento||'DEPOSITO';tipos[t]=(tipos[t]||0)+1;});
+  if(CC.tipos) CC.tipos.destroy();
+  CC.tipos=new Chart(document.getElementById('cTipos'),{type:'doughnut',
+    data:{labels:Object.keys(tipos),datasets:[{data:Object.values(tipos),backgroundColor:['#00e5c3','#0097ff','#f7b733','#ff4d4d'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9095a8',boxWidth:10}}}}});
+  document.getElementById('dashTbl').innerHTML=movs.slice(0,8).map(m=>`
+    <tr><td class="mono">${m.idMovimiento}</td><td class="mono">${fmtD(m.fechaMovimiento)}</td>
+    <td class="mono">${m.idCuenta}</td><td>${badge(m.tipoMovimiento||'DEPOSITO')}</td>
+    <td style="color:#00e5c3;font-family:var(--fm);">${fmt(m.monto)}</td>
+    <td style="color:var(--muted2);font-size:12px;">${m.descripcion||'—'}</td></tr>`).join('');
+}
+
+// ── CLIENTES ──
+async function cargarClientes(){
+  const {ok,data}=await api('/clientes').catch(()=>({ok:false}));
+  _clis=ok?data:mockClis();
+  renderClis(_clis);
+}
+function renderClis(list){
+  document.getElementById('cliTbl').innerHTML=list.map((c,i)=>`
+    <tr><td class="mono">${c.idCliente}</td><td class="mono">${c.cedula||'—'}</td>
+    <td>${c.nombre||'—'}${i<3?` <span class="badge b-w">Top ${i+1}</span>`:''}</td>
+    <td>${c.apellido||'—'}</td>
+    <td style="color:var(--muted2)">${c.correo||'—'}</td>
+    <td class="mono">${c.telefono||'—'}</td>
+    <td>${c.cuentas??'—'}</td>
+    <td style="color:var(--accent);font-family:var(--fm);">${fmt(c.patrimonio||0)}</td></tr>`).join('')||
+    '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px;">Sin resultados</td></tr>';
+}
+function filtrarCli(){
+  const q=document.getElementById('busqCli').value.toLowerCase();
+  renderClis(_clis.filter(c=>(c.nombre||'').toLowerCase().includes(q)||(c.apellido||'').toLowerCase().includes(q)||(c.cedula||'').toLowerCase().includes(q)));
+}
+async function crearCliente(){
+  const body={cedula:document.getElementById('nCedula').value,nombre:document.getElementById('nNombre').value,
+    apellido:document.getElementById('nApellido').value,telefono:document.getElementById('nTel').value,
+    correo:document.getElementById('nCorreo').value,direccion:document.getElementById('nDir').value};
+  if(!body.nombre){toast('El nombre es obligatorio','error');return;}
+  if(!body.cedula){toast('La cédula es obligatoria','error');return;}
+  setBtn('btnCrearCli',true);
+  const {ok,data}=await api('/cliente','POST',body).catch(()=>({ok:false,data:{message:'Sin conexión'}}));
+  if(ok){toast(data.message||'Cliente creado','success');cargarClientes();}
+  else toast(data.message||'Error al crear cliente','error');
+  setBtn('btnCrearCli',false,'Crear cliente');
+}
+
+// ── CUENTAS ──
+async function cargarCuentas(){
+  const path=S.rol==='CAJERO'?'/cuentas':`/cuentas/${S.id}`;
+  const {ok,data}=await api(path).catch(()=>({ok:false}));
+  const ctas=ok?data:mockCuentas(S.id||1);
+  document.getElementById('cuentasCards').innerHTML=ctas.map(c=>`
+    <div class="account-card">
+      <div class="card-chip"><span></span><span></span><span></span><span></span></div>
+      <div style="font-family:var(--fm);letter-spacing:2px;color:var(--muted2);font-size:15px;margin-bottom:16px;">${c.numeroCuenta}</div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:5px;">Saldo disponible</div>
+      <div style="font-family:var(--fh);font-size:30px;color:var(--accent);">${fmt(c.saldo)}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:18px;font-size:11px;color:var(--muted);">
+        <span>ID ${c.idCuenta}</span><span>${c.tipoCuenta||'Corriente'}</span><span>${badge(c.estado||'Activa')}</span>
+      </div>
+    </div>`).join('');
+  const sel=document.getElementById('filtroMovCuenta');
+  sel.innerHTML='<option value="">Todas las cuentas</option>'+ctas.map(c=>`<option value="${c.idCuenta}">${c.numeroCuenta}</option>`).join('');
+  cargarHistorial();
+}
+async function cargarHistorial(){
+  const f=document.getElementById('filtroMovCuenta')?.value;
+  const path=f?`/movimientos/cuenta/${f}`:'/movimientos';
+  const {ok,data}=await api(path).catch(()=>({ok:false}));
+  const movs=ok?data:mockMovs();
+  document.getElementById('histTbl').innerHTML=movs.slice(0,30).map(m=>`
+    <tr><td class="mono">${m.idMovimiento}</td><td class="mono">${fmtD(m.fechaMovimiento)}</td>
+    <td>${badge(m.tipoMovimiento||'DEPOSITO')}</td>
+    <td style="color:var(--muted2)">${m.descripcion||'—'}</td>
+    <td style="color:#00e5c3;font-family:var(--fm);">${fmt(m.monto)}</td></tr>`).join('');
+}
+async function abrirCuenta(){
+  const body={idCliente:+document.getElementById('ncIdCli').value,
+    tipoCuenta:document.getElementById('ncTipo').value,
+    depositoInicial:+document.getElementById('ncDeposito').value||0};
+  if(!body.idCliente){toast('Ingrese ID de cliente','error');return;}
+  setBtn('btnAbrirCta',true);
+  const {ok,data}=await api('/cuenta','POST',body).catch(()=>({ok:false,data:{message:'Sin conexión'}}));
+  if(ok) toast(data.message||'Cuenta creada','success');
+  else toast(data.message||'Error al abrir cuenta','error');
+  setBtn('btnAbrirCta',false,'Abrir cuenta');
+}
+
+// ── TRANSFERENCIAS ──
+async function loadTrans(){
+  const {ok,data}=await api('/movimientos').catch(()=>({ok:false}));
+  _transRec=(ok?data:mockMovs()).slice(0,10);
+  renderTransRec();
+  if(CC.ops) CC.ops.destroy();
+  CC.ops=new Chart(document.getElementById('cOps'),{type:'bar',
+    data:{labels:_transRec.map(m=>`#${m.idMovimiento}`),
+      datasets:[{label:'Monto',data:_transRec.map(m=>m.monto),backgroundColor:'rgba(0,229,195,0.35)',borderColor:'#00e5c3',borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7082'}},y:{ticks:{color:'#6b7082',callback:v=>'$'+v.toLocaleString()}}}}});
+}
+function renderTransRec(){
+  document.getElementById('transRecTbl').innerHTML=_transRec.map(m=>`
+    <tr><td class="mono">${new Date(m.fechaMovimiento).toLocaleTimeString()}</td>
+    <td>${badge(m.tipoMovimiento||'DEPOSITO')}</td>
+    <td class="mono">${m.idCuenta}</td>
+    <td style="color:#00e5c3;font-family:var(--fm);">${fmt(m.monto)}</td></tr>`).join('');
+}
+async function doDeposito(){
+  const idCuenta=+document.getElementById('depCuenta').value;
+  const monto=+document.getElementById('depMonto').value;
+  if(!idCuenta){toast('Ingrese una cuenta válida','error');return;}
+  if(!monto||monto<=0){toast('Monto inválido','error');return;}
+  setBtn('btnDep',true);
+  const {ok,data}=await api('/deposito','POST',{idCuenta,monto}).catch(()=>({ok:false,data:{message:'Sin conexión'}}));
+  if(ok){toast(data.message||'Depósito procesado','success');
+    _transRec.unshift({idMovimiento:Date.now(),fechaMovimiento:new Date().toISOString(),tipoMovimiento:'DEPOSITO',monto,idCuenta});
+    _transRec=_transRec.slice(0,10);renderTransRec();}
+  else toast(data.message||'Error al depositar','error');
+  setBtn('btnDep',false,'Confirmar depósito');
+}
+async function doRetiro(){
+  const idCuenta=+document.getElementById('retCuenta').value;
+  const monto=+document.getElementById('retMonto').value;
+  if(!idCuenta||monto<=0){toast('Datos inválidos','error');return;}
+  setBtn('btnRet',true);
+  const {ok,data}=await api('/retiro','POST',{idCuenta,monto}).catch(()=>({ok:false,data:{message:'Sin conexión'}}));
+  if(ok){toast(data.message||'Retiro realizado','success');
+    _transRec.unshift({idMovimiento:Date.now(),fechaMovimiento:new Date().toISOString(),tipoMovimiento:'RETIRO',monto,idCuenta});
+    _transRec=_transRec.slice(0,10);renderTransRec();}
+  else toast(data.message||'Error al retirar','error');
+  setBtn('btnRet',false,'Confirmar retiro');
+}
+async function doTransferencia(){
+  const origen=+document.getElementById('trfOrigen').value;
+  const destino=+document.getElementById('trfDestino').value;
+  const monto=+document.getElementById('trfMonto').value;
+  if(!origen||!destino){toast('Complete ambas cuentas','error');return;}
+  if(origen===destino){toast('Origen y destino iguales','error');return;}
+  if(monto<=0){toast('Monto inválido','error');return;}
+  setBtn('btnTrf',true);
+  const {ok,data}=await api('/transferencia','POST',{idCuentaOrigen:origen,idCuentaDestino:destino,monto}).catch(()=>({ok:false,data:{message:'Sin conexión'}}));
+  if(ok){toast(data.message||'Transferencia ejecutada','success');
+    _transRec.unshift({idMovimiento:Date.now(),fechaMovimiento:new Date().toISOString(),tipoMovimiento:'TRANSFERENCIA',monto,idCuenta:origen});
+    _transRec=_transRec.slice(0,10);renderTransRec();}
+  else toast(data.message||'Error en transferencia','error');
+  setBtn('btnTrf',false,'Ejecutar transferencia');
+}
+
+// ── TARJETAS ──
+async function cargarTarjetas(){
+  const path=S.rol==='CAJERO'?'/tarjetas':`/tarjetas/cliente/${S.id}`;
+  const {ok,data}=await api(path).catch(()=>({ok:false}));
+  const tjs=ok?data:mockTarjetas();
+  document.getElementById('tarjetasCards').innerHTML=tjs.map(t=>`
+    <div class="account-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="font-family:var(--fh);font-size:13px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.8);">${t.tipoTarjeta||'VISA'}</div>
+        <span class="badge b-ok">${t.estado||'Activa'}</span>
+      </div>
+      <div style="font-family:var(--fm);letter-spacing:3px;color:rgba(255,255,255,0.65);font-size:14px;margin-bottom:16px;">${t.numeroTarjeta||'•••• •••• •••• ••••'}</div>
+      <div style="margin-bottom:4px;font-size:11px;color:var(--muted);">Disponible</div>
+      <div style="font-family:var(--fh);font-size:24px;color:var(--accent);">${fmt((t.disponible!=null?t.disponible:(t.limiteCredito-t.saldoUtilizado))||0)}</div>
+      <div style="margin-top:10px;">
+        <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;">
+          <div style="height:100%;width:${Math.round(((t.saldoUtilizado||0)/(t.limiteCredito||1))*100)}%;background:var(--accent2);border-radius:2px;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px;">
+          <span>Usado: ${fmt(t.saldoUtilizado||0)}</span><span>Límite: ${fmt(t.limiteCredito||0)}</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:11px;color:var(--muted);">
+        <span>ID ${t.idTarjeta}</span><span>Cliente ${t.idCliente}</span>
+      </div>
+    </div>`).join('')||'<p style="color:var(--muted);">No hay tarjetas registradas.</p>';
+}
+function previewCard(){
+  document.getElementById('pvBrand').textContent=document.getElementById('tcTipo')?.value||'VISA';
+  document.getElementById('pvLimite').textContent=fmt(+document.getElementById('tcLimite')?.value||0);
+  document.getElementById('pvCli').textContent=document.getElementById('tcIdCli')?.value||'—';
+}
+async function emitirTarjeta(){
+  const body={idCliente:+document.getElementById('tcIdCli').value,
+    limiteCredito:+document.getElementById('tcLimite').value,
+    tipoTarjeta:document.getElementById('tcTipo').value};
+  if(!body.idCliente||!body.limiteCredito){toast('Complete todos los campos','error');return;}
+  setBtn('btnEmitir',true);
+  const {ok,data}=await api('/tarjeta','POST',body).catch(()=>({ok:false,data:{message:'Sin conexión'}}));
+  if(ok) toast(data.message||'Tarjeta emitida','success');
+  else toast(data.message||'Error al emitir tarjeta','error');
+  setBtn('btnEmitir',false,'Emitir tarjeta');
+}
+
+// ── PRÉSTAMOS ADMIN ──
+async function cargarPrestamos(){
+  const {ok,data}=await api('/prestamos-pendientes').catch(()=>({ok:false}));
+  const prest=ok?data:mockPrest();
+  if(!prest.length){document.getElementById('prestamosWrap').innerHTML='<p style="color:var(--muted);padding:30px;">No hay préstamos pendientes.</p>';return;}
+  document.getElementById('prestamosWrap').innerHTML=`
+    <div class="tw"><div class="th"><span class="th-t">Solicitudes pendientes</span><span class="badge b-w">${prest.length} pendientes</span></div>
+    <table><thead><tr><th>ID</th><th>Cliente</th><th>Nombre</th><th>Monto</th><th>Plazo</th><th>Cuota</th><th>Tasa</th><th>Fecha</th><th>Acciones</th></tr></thead>
+    <tbody>${prest.map(p=>`<tr>
+      <td class="mono">${p.idPrestamo}</td><td class="mono">${p.idCliente}</td>
+      <td>${p.nombreCliente||'—'}</td>
+      <td style="color:var(--accent);font-family:var(--fm);">${fmt(p.monto)}</td>
+      <td>${p.plazoMeses} meses</td>
+      <td>${fmt(p.cuotaMensual)}</td>
+      <td>${p.tasaInteres}%</td>
+      <td class="mono">${fmtD(p.fechaPrestamo)}</td>
+      <td style="display:flex;gap:6px;padding:10px 16px;">
+        <button class="btn btn-ok" onclick="procesarPrest(${p.idPrestamo},'Aprobado')">✔ Aprobar</button>
+        <button class="btn btn-no" onclick="procesarPrest(${p.idPrestamo},'Rechazado')">✖ Rechazar</button>
+      </td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+async function procesarPrest(id,estado){
+  const {ok,data}=await api('/prestamo/estado','POST',{idPrestamo:id,estado}).catch(()=>({ok:false,data:{message:'Sin conexión'}}));
+  if(ok){toast(`Préstamo ${estado}`,'success');cargarPrestamos();}
+  else toast(data.message||'Error','error');
+}
+
+// ── FRAUDES ──
+async function cargarFraudes(){
+  const {ok,data}=await api('/fraudes/analisis').catch(()=>({ok:false}));
+  const alertas=ok?data:genAlertasMock();
+  document.getElementById('fraudeStats').innerHTML=`
+    <div class="stat-card sc-r"><div class="sl">Alertas totales</div><div class="sv">${alertas.length}</div><div class="sm">análisis heurístico</div></div>
+    <div class="stat-card sc-a"><div class="sl">Nivel alto</div><div class="sv">${alertas.filter(a=>a.nivel==='Alto').length}</div><div class="sm">riesgo crítico</div></div>
+    <div class="stat-card sc-b"><div class="sl">Nivel medio</div><div class="sv">${alertas.filter(a=>a.nivel==='Medio').length}</div><div class="sm">bajo monitoreo</div></div>
+    <div class="stat-card sc-t"><div class="sl">Umbral Big Data</div><div class="sv">>500</div><div class="sm">movs/24h por cuenta</div></div>`;
+  const ctas=alertas.slice(0,6).map(a=>`Cta.${a.idCuenta}`);
+  const puns=alertas.slice(0,6).map(a=>a.puntaje||+(Math.random()*100).toFixed(0));
+  if(CC.fraude) CC.fraude.destroy();
+  CC.fraude=new Chart(document.getElementById('cFraude'),{type:'bar',
+    data:{labels:ctas,datasets:[{label:'Puntaje',data:puns,
+      backgroundColor:puns.map(v=>v>70?'rgba(255,77,77,0.5)':v>40?'rgba(247,183,51,0.5)':'rgba(0,229,195,0.4)'),
+      borderColor:puns.map(v=>v>70?'#ff4d4d':v>40?'#f7b733':'#00e5c3'),borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7082'}},y:{min:0,max:100,ticks:{color:'#6b7082'}}}}});
+  const ni={Alto:0,Medio:0,Bajo:0};
+  alertas.forEach(a=>{ni[a.nivel]=(ni[a.nivel]||0)+1;});
+  if(CC.fraudeTipo) CC.fraudeTipo.destroy();
+  CC.fraudeTipo=new Chart(document.getElementById('cFraudeTipo'),{type:'doughnut',
+    data:{labels:['Alto','Medio','Bajo'],datasets:[{data:[ni.Alto,ni.Medio,ni.Bajo],backgroundColor:['#ff4d4d','#f7b733','#00e5c3'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9095a8',boxWidth:10}}}}});
+  document.getElementById('fraudeAlertas').innerHTML=alertas.slice(0,6).map(a=>`
+    <div class="fraud-item">
+      <div class="fraud-icon">${a.nivel==='Alto'?'🔴':'⚠️'}</div>
+      <div style="flex:1;">
+        <div style="font-weight:500;font-size:13px;margin-bottom:3px;">${a.descripcion} — Cuenta ${a.idCuenta}</div>
+        <div style="font-size:12px;color:var(--muted2);font-family:var(--fm);">${fmtD(a.fecha)} · Monto: ${fmt(a.monto)} · Puntaje: ${a.puntaje}</div>
+      </div>
+      <span class="badge ${a.nivel==='Alto'?'b-no':'b-w'}">${a.nivel}</span>
+    </div>`).join('');
+}
+function genAlertasMock(){
+  const ds=['Monto superior al umbral ($80k)','Actividad masiva en 24h','Ráfaga de transacciones','Transferencia inusual'];
+  return Array.from({length:6},(_,i)=>({idCuenta:i+1,nivel:['Alto','Alto','Medio','Bajo'][i%4],
+    descripcion:ds[i%ds.length],monto:+(Math.random()*90000+1000).toFixed(2),
+    puntaje:+(Math.random()*100).toFixed(0),fecha:new Date(Date.now()-i*3600000).toISOString()}));
+}
+
+// ── BIG DATA ──
+let _simOk=0,_simErr=0,_simSum=0;
+function loadBigData(){
+  document.getElementById('simStats').innerHTML=`
+    <div class="stat-card sc-t"><div class="sl">Completadas</div><div class="sv" id="ssOk">0</div></div>
+    <div class="stat-card sc-r"><div class="sl">Errores</div><div class="sv" id="ssErr">0</div></div>
+    <div class="stat-card sc-b"><div class="sl">Volumen</div><div class="sv" id="ssSum">$0</div></div>`;
+}
+async function iniciarSim(){
+  const n=+document.getElementById('simN').value||100;
+  const min=+document.getElementById('simMin').value||100;
+  const max=+document.getElementById('simMax').value||100000;
+  const vel=+document.getElementById('simVel').value;
+  if(min>=max){toast('Mínimo debe ser menor al máximo','error');return;}
+  _simRun=true;_simOk=0;_simErr=0;_simSum=0;
+  document.getElementById('simProgress').style.display='block';
+  document.getElementById('simLog').style.display='block';
+  document.getElementById('simLog').innerHTML='';
+  document.getElementById('btnSimStart').disabled=true;
+  document.getElementById('btnSimStop').disabled=false;
+  if(CC.sim) CC.sim.destroy();
+  CC.sim=new Chart(document.getElementById('cSim'),{type:'line',
+    data:{labels:[],datasets:[{label:'Monto',data:[],borderColor:'#00e5c3',backgroundColor:'rgba(0,229,195,0.06)',fill:true,tension:0.3,pointRadius:0}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,color:'#6b7082'}},y:{ticks:{color:'#6b7082',callback:v=>'$'+v.toLocaleString()}}}}});
+  for(let i=0;i<n&&_simRun;i++){
+    const monto=+(min+Math.random()*(max-min)).toFixed(2);
+    const idCuenta=1; // usar IdCuenta=1 del dato de prueba en la BD
+    const log=document.getElementById('simLog');
+    try{
+      const {ok}=await api('/deposito','POST',{idCuenta,monto}).catch(()=>({ok:false}));
+      _simOk++;_simSum+=monto;
+      log.innerHTML+=`<span class="ok">✔ Op ${i+1} — CTA-${idCuenta} — ${fmt(monto)}</span>\n`;
+    }catch{
+      _simErr++;
+      log.innerHTML+=`<span style="color:var(--danger);">✖ Error op ${i+1}</span>\n`;
+    }
+    log.scrollTop=log.scrollHeight;
+    const pct=Math.round(((i+1)/n)*100);
+    document.getElementById('simBar').style.width=pct+'%';
+    document.getElementById('simPct').textContent=pct+'%';
+    document.getElementById('simCount').textContent=`${i+1}/${n}`;
+    document.getElementById('ssOk').textContent=_simOk;
+    document.getElementById('ssErr').textContent=_simErr;
+    document.getElementById('ssSum').textContent=fmt(_simSum);
+    if(CC.sim){
+      CC.sim.data.labels.push(i+1);
+      CC.sim.data.datasets[0].data.push(monto);
+      if(CC.sim.data.labels.length>60){CC.sim.data.labels.shift();CC.sim.data.datasets[0].data.shift();}
+      CC.sim.update('none');
+    }
+    if(vel>0) await new Promise(r=>setTimeout(r,vel));
+  }
+  _simRun=false;
+  document.getElementById('btnSimStart').disabled=false;
+  document.getElementById('btnSimStop').disabled=true;
+  if(_simOk>0) toast(`Simulación: ${_simOk} ops · ${fmt(_simSum)} procesados`,'success');
+}
+function detenerSim(){_simRun=false;toast('Simulación detenida','warn');}
+
+// ── AUDITORÍA ──
+async function cargarAuditoria(){
+  const {ok,data}=await api('/auditoria').catch(()=>({ok:false}));
+  _auditAll=ok?data:mockAudit();
+  const total=_auditAll.length;
+  const tabs={};
+  _auditAll.forEach(a=>{tabs[a.tablaAfectada||'?']=(tabs[a.tablaAfectada||'?']||0)+1;});
+  document.getElementById('auditStats').innerHTML=`
+    <div class="stat-card sc-t"><div class="sl">Total registros</div><div class="sv">${total}</div></div>
+    <div class="stat-card sc-b"><div class="sl">Tablas afectadas</div><div class="sv">${Object.keys(tabs).length}</div></div>
+    <div class="stat-card sc-a"><div class="sl">Operaciones UPDATE</div><div class="sv">${_auditAll.filter(a=>a.operacion==='UPDATE').length}</div></div>
+    <div class="stat-card sc-r"><div class="sl">DELETE registrados</div><div class="sv">${_auditAll.filter(a=>a.operacion==='DELETE').length}</div></div>`;
+  const horas=Array.from({length:24},(_,h)=>_auditAll.filter(a=>a.fecha&&new Date(a.fecha).getHours()===h).length);
+  if(CC.audit) CC.audit.destroy();
+  CC.audit=new Chart(document.getElementById('cAudit'),{type:'bar',
+    data:{labels:Array.from({length:24},(_,h)=>h+'h'),
+      datasets:[{label:'Ops',data:horas,backgroundColor:'rgba(0,151,255,0.35)',borderColor:'#0097ff',borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7082',maxTicksLimit:12}},y:{ticks:{color:'#6b7082'}}}}});
+  renderAudit(_auditAll);
+}
+function renderAudit(list){
+  document.getElementById('auditTbl').innerHTML=list.map(a=>`
+    <tr><td class="mono">${a.idAuditoria}</td><td class="mono">${a.usuarioSistema||'dbo'}</td>
+    <td>${badge(a.tablaAfectada||'?')}</td>
+    <td>${badge(a.operacion||'UPDATE')}</td>
+    <td class="mono">${fmtD(a.fecha)}</td>
+    <td style="color:var(--muted2);font-size:12px;">${a.registro||'—'}</td></tr>`).join('');
+}
+function filtrarAudit(){
+  const q=document.getElementById('auditQ').value.toLowerCase();
+  renderAudit(_auditAll.filter(a=>(a.tablaAfectada||'').toLowerCase().includes(q)||(a.operacion||'').toLowerCase().includes(q)||(a.usuarioSistema||'').toLowerCase().includes(q)));
+}
+function exportAudit(){
+  const rows=[['ID','Usuario','Tabla','Operacion','Fecha','Registro'],..._auditAll.map(a=>[a.idAuditoria,a.usuarioSistema,a.tablaAfectada,a.operacion,fmtD(a.fecha),a.registro||''])];
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const el=document.createElement('a');
+  el.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  el.download='auditoria_atlanta_'+new Date().toISOString().slice(0,10)+'.csv';
+  el.click();
+  toast('Exportando CSV...','info');
+}
+
+// ── RESUMEN FINANCIERO ──
+async function cargarResumen(){
+  const [{ok:o1,data:d1},{ok:o2,data:d2}]=await Promise.all([
+    api('/resumen-financiero').catch(()=>({ok:false,data:[]})),
+    api('/estadisticas-mensuales').catch(()=>({ok:false,data:[]}))
+  ]);
+  const top=(o1&&Array.isArray(d1))?d1:Array.from({length:5},(_,i)=>({nombre:'Cliente '+(i+1),totalDinero:+(Math.random()*5000000+10000).toFixed(2)}));
+  const mens=(o2&&Array.isArray(d2))?d2:Array.from({length:6},(_,i)=>({anio:2024,mes:i+7,totalMovimientos:+(Math.random()*50000).toFixed(0),montoMovido:+(Math.random()*50000000+1000000).toFixed(2)}));
+  if(CC.top10) CC.top10.destroy();
+  CC.top10=new Chart(document.getElementById('cTop10'),{type:'bar',
+    data:{labels:top.map(c=>c.nombre),
+      datasets:[{label:'Patrimonio',data:top.map(c=>c.totalDinero),backgroundColor:'rgba(0,229,195,0.4)',borderColor:'#00e5c3',borderWidth:1}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7082',callback:v=>'$'+v.toLocaleString()}},y:{ticks:{color:'#9095a8',font:{size:11}}}}}});
+  if(CC.mensual) CC.mensual.destroy();
+  CC.mensual=new Chart(document.getElementById('cMensual'),{type:'bar',
+    data:{labels:mens.map(m=>`${m.anio||''}-${String(m.mes||'').padStart(2,'0')}`),
+      datasets:[{label:'Movimientos',data:mens.map(m=>m.totalMovimientos),backgroundColor:'rgba(0,151,255,0.4)',borderColor:'#0097ff',borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7082',maxRotation:45}},y:{ticks:{color:'#6b7082'}}}}});
+  document.getElementById('top10Tbl').innerHTML=top.map((c,i)=>`
+    <tr><td><strong>#${i+1}</strong></td><td>${c.nombre}</td>
+    <td style="color:var(--accent);font-family:var(--fm);">${fmt(c.totalDinero)}</td></tr>`).join('');
+}
+
+// ── MIS PRÉSTAMOS CLIENTE ──
+async function cargarMisPrest(){
+  const {ok,data}=await api(`/prestamos/cliente/${S.id}`).catch(()=>({ok:false}));
+  const prest=ok?data:mockPrest();
+  document.getElementById('misPrestTbl').innerHTML=prest.map(p=>`
+    <tr><td class="mono">${p.idPrestamo}</td>
+    <td style="color:var(--accent);font-family:var(--fm);">${fmt(p.monto)}</td>
+    <td>${p.plazoMeses} meses</td><td>${fmt(p.cuotaMensual)}</td>
+    <td>${p.tasaInteres}%</td><td>${badge(p.estado||'Pendiente')}</td>
+    <td class="mono">${fmtD(p.fechaPrestamo)}</td></tr>`).join('')||
+    '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px;">No tiene solicitudes</td></tr>';
+}
+function simPrest(){
+  const m=+document.getElementById('pMonto').value;
+  const p=+document.getElementById('pPlazo').value;
+  if(!m||!p) return;
+  const tm=0.15/12;
+  const cuota=(m*tm*Math.pow(1+tm,p))/(Math.pow(1+tm,p)-1);
+  document.getElementById('pCuota').textContent=fmt(cuota);
+  document.getElementById('pTotal').textContent=fmt(cuota*p);
+  document.getElementById('pSimRes').style.display='block';
+}
+async function solPrestamo(){
+  const monto=+document.getElementById('pMonto').value;
+  const plazo=+document.getElementById('pPlazo').value;
+  if(monto<100){toast('Mínimo $100','error');return;}
+  if(plazo<=0){toast('Plazo inválido','error');return;}
+  setBtn('btnSolPrest',true);
+  const {ok,data}=await api('/prestamo','POST',{idCliente:S.id,monto,plazo}).catch(()=>({ok:false,data:{message:'Sin conexión'}}));
+  if(ok){toast(data.message||'Solicitud enviada','info');cargarMisPrest();}
+  else toast(data.message||'Error','error');
+  setBtn('btnSolPrest',false,'Enviar solicitud');
+}
+
+function doLogout(){S={rol:'',id:0,nombre:''};location.reload();}
+</script>
+</body>
+</html>
