@@ -8,7 +8,7 @@ builder.Services.AddControllers();
 // ── Cadena de conexión exacta para tu instancia SQL Developer ──
 builder.Services.AddDbContext<BancoContext>(op =>
     op.UseSqlServer(
-        "Server=.\\SQLDEVELOPER;Database=BANCO_BIGDATA;Trusted_Connection=True;Encrypt=False;",
+        "Server=127.0.0.1,1433;Initial Catalog=BANCO_BIGDATA;User Id=sa;Password=SqlServer2025@;TrustServerCertificate=True;",
         sqlOptions => sqlOptions.CommandTimeout(60)
     )
 );
