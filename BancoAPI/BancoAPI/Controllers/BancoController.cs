@@ -533,6 +533,150 @@ public class BancoController : ControllerBase
         }
         catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
     }
+
+    [HttpGet("reportes")]
+    public IActionResult GetReportes()
+    {
+        try
+        {
+            var totalClientes = _db.Clientes.Count();
+            var totalCuentas = _db.Cuentas.Count();
+            var cuentasActivas = _db.Cuentas.Count(c => c.Estado == "Activa");
+            var totalMovimientos = _db.Movimientos.Count();
+            var volumenMovimientos = _db.Movimientos.Sum(m => (decimal?)m.Monto) ?? 0m;
+            var prestamosPendientes = _db.Prestamos.Count(p => p.Estado == "Pendiente");
+            var tarjetasActivas = _db.Tarjetas.Count(t => t.Estado == "Activa");
+            var patrimonioTotal = _db.Cuentas
+                .Where(c => c.Estado == "Activa")
+                .Sum(c => (decimal?)c.Saldo) ?? 0m;
+
+            var topClientes = _db.Clientes
+                .Select(c => new
+                {
+                    c.IdCliente,
+                    NombreCompleto = (c.Nombre ?? "") + " " + (c.Apellido ?? ""),
+                    c.Cedula,
+                    c.Correo,
+                    Cuentas = _db.Cuentas.Count(cu => cu.IdCliente == c.IdCliente),
+                    Patrimonio = (decimal?)_db.Cuentas
+                        .Where(cu => cu.IdCliente == c.IdCliente && cu.Estado == "Activa")
+                        .Sum(cu => cu.Saldo) ?? 0m
+                })
+                .OrderByDescending(c => c.Patrimonio)
+                .Take(10)
+                .ToList();
+
+            var movimientosMensuales = _db.Movimientos
+                .GroupBy(m => new { Anio = m.FechaMovimiento.Year, Mes = m.FechaMovimiento.Month })
+                .Select(g => new
+                {
+                    g.Key.Anio,
+                    g.Key.Mes,
+                    TotalMovimientos = g.Count(),
+                    MontoMovido = g.Sum(m => m.Monto)
+                })
+                .OrderBy(x => x.Anio)
+                .ThenBy(x => x.Mes)
+                .ToList();
+
+            var movimientosPorTipo = _db.Movimientos
+                .GroupBy(m => m.TipoMovimiento ?? "Sin tipo")
+                .Select(g => new
+                {
+                    TipoMovimiento = g.Key,
+                    Total = g.Count(),
+                    MontoTotal = g.Sum(m => m.Monto)
+                })
+                .OrderByDescending(x => x.Total)
+                .ToList();
+
+            var cuentasPorTipo = _db.Cuentas
+                .GroupBy(c => c.TipoCuenta ?? "Sin tipo")
+                .Select(g => new
+                {
+                    TipoCuenta = g.Key,
+                    Total = g.Count(),
+                    SaldoTotal = g.Sum(c => c.Saldo ?? 0m)
+                })
+                .OrderByDescending(x => x.Total)
+                .ToList();
+
+            var prestamosPorEstado = _db.Prestamos
+                .GroupBy(p => p.Estado ?? "Sin estado")
+                .Select(g => new
+                {
+                    Estado = g.Key,
+                    Total = g.Count(),
+                    MontoTotal = g.Sum(p => p.Monto)
+                })
+                .OrderByDescending(x => x.Total)
+                .ToList();
+
+            var movimientosRecientes = _db.Movimientos
+                .Join(_db.Cuentas,
+                    m => m.IdCuenta, cta => cta.IdCuenta,
+                    (m, cta) => new { m, cta })
+                .Join(_db.Clientes,
+                    mc => mc.cta.IdCliente, c => c.IdCliente,
+                    (mc, c) => new
+                    {
+                        mc.m.IdMovimiento,
+                        mc.m.FechaMovimiento,
+                        mc.m.TipoMovimiento,
+                        mc.m.Monto,
+                        mc.m.Descripcion,
+                        mc.m.IdCuenta,
+                        NumeroCuenta = mc.cta.NumeroCuenta,
+                        Cliente = (c.Nombre ?? "") + " " + (c.Apellido ?? "")
+                    })
+                .OrderByDescending(x => x.FechaMovimiento)
+                .Take(25)
+                .ToList();
+
+            var prestamosPendientesDetalle = _db.Prestamos
+                .Where(p => p.Estado == "Pendiente")
+                .Join(_db.Clientes,
+                    p => p.IdCliente, c => c.IdCliente,
+                    (p, c) => new
+                    {
+                        p.IdPrestamo,
+                        p.Monto,
+                        p.TasaInteres,
+                        p.PlazoMeses,
+                        p.CuotaMensual,
+                        p.Estado,
+                        p.FechaPrestamo,
+                        p.IdCliente,
+                        NombreCliente = (c.Nombre ?? "") + " " + (c.Apellido ?? "")
+                    })
+                .OrderByDescending(x => x.FechaPrestamo)
+                .Take(25)
+                .ToList();
+
+            return Ok(new
+            {
+                kpis = new
+                {
+                    totalClientes,
+                    totalCuentas,
+                    cuentasActivas,
+                    totalMovimientos,
+                    volumenMovimientos,
+                    prestamosPendientes,
+                    tarjetasActivas,
+                    patrimonioTotal
+                },
+                topClientes,
+                movimientosMensuales,
+                movimientosPorTipo,
+                cuentasPorTipo,
+                prestamosPorEstado,
+                movimientosRecientes,
+                prestamosPendientesDetalle
+            });
+        }
+        catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
+    }
 }
 
 // ════════════════════════════════════════════════════════

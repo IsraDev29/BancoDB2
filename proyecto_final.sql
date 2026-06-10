@@ -208,3 +208,30 @@ SELECT YEAR(FechaMovimiento) AS Anio, MONTH(FechaMovimiento) AS Mes, COUNT(*) AS
 FROM Movimientos
 GROUP BY YEAR(FechaMovimiento), MONTH(FechaMovimiento)
 ORDER BY Anio, Mes;
+
+CREATE PROC SP_Top10Clientes
+AS
+BEGIN
+    SELECT TOP 10
+        CONCAT(Nombre,' ',Apellido) Cliente,
+        SUM(Saldo) Total
+    FROM Clientes c
+    INNER JOIN Cuentas cu
+        ON c.IdCliente = cu.IdCliente
+    GROUP BY Nombre,Apellido
+    ORDER BY Total DESC
+END
+
+CREATE PROC SP_MovimientosTiempoReal
+AS
+BEGIN
+    SELECT TOP 50
+        Monto
+    FROM Movimientos
+    ORDER BY FechaMovimiento DESC
+END
+
+
+
+
+

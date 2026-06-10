@@ -7,7 +7,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<style>
+  <!-- DataTables (jQuery requerido) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link  rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <!-- Plugin de exportación (Excel, PDF, CSV) -->
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <style>
 :root{
   --bg:#05070b;
   --bg2:rgba(10,14,22,0.88);
@@ -1154,6 +1162,61 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
         </div>
       </div>
     </div>
+    
+    <div class="page" id="pg-reportes">
+      <h2 class="sec-title">📊 Reportes Visuales</h2>
+
+      <!-- Fila de gráficas -->
+      <div class="chart-grid">
+
+        <!-- Línea tiempo real -->
+        <div class="chart-card">
+          <div class="chart-title">Montos en Tiempo Real</div>
+          <div style="position:relative;height:260px;">
+            <canvas id="cTiempoReal"></canvas>
+          </div>
+        </div>
+
+        <!-- Top clientes -->
+        <div class="chart-card">
+          <div class="chart-title">Top 10 Clientes</div>
+          <div style="position:relative;height:260px;">
+            <canvas id="cTopClientes"></canvas>
+          </div>
+        </div>
+
+        <!-- Tipos cuenta -->
+        <div class="chart-card">
+          <div class="chart-title">Tipos de Cuenta</div>
+          <div style="position:relative;height:260px;">
+            <canvas id="cTiposCuenta"></canvas>
+          </div>
+        </div>
+
+        <!-- Fraudes -->
+        <div class="chart-card">
+          <div class="chart-title">Riesgo de Fraude</div>
+          <div style="position:relative;height:260px;">
+            <canvas id="cRadarFraude"></canvas>
+          </div>
+        </div>
+
+        </div>
+      </div>
+
+      <!-- Tabla DataTables -->
+      <div class="chart-card">
+        <div class="chart-title">Detalle de Movimientos Recientes</div>
+        <table id="tblMovimientos" class="display" style="width:100%">
+          <thead>
+          <tr>
+            <th>#</th><th>Fecha</th><th>Cliente</th>
+            <th>Cuenta</th><th>Tipo</th><th>Monto</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
 
     <!-- PRÉSTAMOS ADMIN -->
     <div class="page" id="pg-prestamos">
@@ -1585,7 +1648,7 @@ function buildNav(){
     resumen:'M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z',
     misprestamos:'M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z',
   };
-  const admin=[['dashboard','Panel General'],['clientes','Clientes'],['cuentas','Cuentas'],['transferencias','Depósitos / Trans.'],['tarjetas','Tarjetas'],['prestamos','Préstamos'],['fraudes','Detección Fraudes'],['bigdata','Simulación Big Data'],['auditoria','Auditoría'],['resumen','Resumen Financiero']];
+  const admin=[['dashboard','Panel General'],['clientes','Clientes'],['cuentas','Cuentas'],['transferencias','Depósitos / Trans.'],['tarjetas','Tarjetas'],['prestamos','Préstamos'],['fraudes','Detección Fraudes'],['bigdata','Simulación Big Data'],['auditoria','Auditoría'],['resumen','Resumen Financiero'],['reportes','Reportes'] ];
   const cli=[['dashboard','Mi Panel'],['cuentas','Mis Cuentas'],['transferencias','Depósitos / Trans.'],['tarjetas','Mis Tarjetas'],['misprestamos','Mis Préstamos']];
   const items=S.rol==='CAJERO'?admin:cli;
   let h='<div class="sb-section">Módulos</div>';
@@ -1603,7 +1666,7 @@ function navTo(pg){
   document.getElementById('nav-'+pg)?.classList.add('active');
   const loaders={dashboard:loadDash,clientes:cargarClientes,cuentas:cargarCuentas,transferencias:loadTrans,
     tarjetas:cargarTarjetas,prestamos:cargarPrestamos,fraudes:cargarFraudes,bigdata:loadBigData,
-    auditoria:cargarAuditoria,resumen:cargarResumen,misprestamos:cargarMisPrest};
+    auditoria:cargarAuditoria,resumen:cargarResumen,misprestamos:cargarMisPrest, reportes:  cargarReportes, };
   if(loaders[pg]) loaders[pg]();
 }
 
@@ -1615,7 +1678,240 @@ function stab(sect,sub,btn){
   btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
+// ── REPORTES VISUALES ──
+async function cargarReportes() {
 
+  // 1. Datos de distribución de cuentas
+  const { ok: okC, data: dataCuentas } = await api('/reporte/distribucion-cuentas')
+          .catch(() => ({ ok: false, data: [] }));
+  const cuentasData = okC ? dataCuentas : [
+    { tipo: 'Ahorros', cantidad: 40 },
+    { tipo: 'Corriente', cantidad: 25 },
+    { tipo: 'Plazo Fijo', cantidad: 10 }
+  ];
+
+  // Gráfica de dona — distribución de cuentas
+  if (CC.distCuentas) CC.distCuentas.destroy();
+  CC.distCuentas = new Chart(document.getElementById('cDistCuentas'), {
+    type: 'doughnut',
+    data: {
+      labels: cuentasData.map(c => c.tipo),
+      datasets: [{
+        data: cuentasData.map(c => c.cantidad),
+        backgroundColor: ['#00e5c3','#0097ff','#ff6b35','#a855f7'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#9095a8' } } }
+    }
+  });
+
+  let chartTiempoReal;
+
+  function cargarTiempoReal() {
+
+    const ctx = document.getElementById('cTiempoReal');
+
+    chartTiempoReal = new Chart(ctx,{
+      type:'line',
+      data:{
+        labels:Array.from({length:50},(_,i)=>i+1),
+        datasets:[{
+          data:Array.from({length:50},
+                  ()=>Math.floor(Math.random()*100000)),
+          borderColor:'#00F5D4',
+          backgroundColor:'rgba(0,245,212,0.10)',
+          fill:true,
+          tension:0.45,
+          pointRadius:0
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false}
+        }
+      }
+    });
+
+    setInterval(()=>{
+      const valor=Math.floor(Math.random()*100000);
+
+      chartTiempoReal.data.datasets[0].data.shift();
+      chartTiempoReal.data.datasets[0].data.push(valor);
+
+      chartTiempoReal.update();
+    },1000);
+  }
+
+  function cargarTopClientes() {
+
+    const ctx = document.getElementById('cTopClientes');
+
+    new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels:[
+          'Juan','Ana','Carlos','María',
+          'José','Pedro','Luis',
+          'Dylan','Sofía','Miguel'
+        ],
+        datasets:[{
+          label:'Saldo',
+          data:[
+            95000,88000,80000,72000,
+            69000,65000,61000,
+            58000,52000,48000
+          ]
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false
+      }
+    });
+  }
+
+  function cargarTiposCuenta() {
+
+    const ctx = document.getElementById('cTiposCuenta');
+
+    new Chart(ctx,{
+      type:'doughnut',
+      data:{
+        labels:[
+          'Ahorro',
+          'Corriente',
+          'Inversión'
+        ],
+        datasets:[{
+          data:[
+            150,
+            90,
+            35
+          ]
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false
+      }
+    });
+  }
+
+  function cargarRadarFraude() {
+
+    const ctx=document.getElementById('cRadarFraude');
+
+    new Chart(ctx,{
+      type:'radar',
+      data:{
+        labels:[
+          'Transferencias',
+          'Retiros',
+          'Depósitos',
+          'Préstamos',
+          'Tarjetas',
+          'Login'
+        ],
+        datasets:[{
+          label:'Riesgo',
+          data:[
+            90,
+            65,
+            20,
+            40,
+            80,
+            30
+          ],
+          fill:true
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          r:{
+            min:0,
+            max:100
+          }
+        }
+      }
+    });
+  }
+
+
+  function cargarReportes(){
+
+    cargarTiempoReal();
+    cargarTopClientes();
+    cargarTiposCuenta();
+    cargarRadarFraude();
+  }
+  
+
+  // 2. Datos de préstamos por estado
+  const { ok: okP, data: dataPrest } = await api('/prestamos-pendientes')
+          .catch(() => ({ ok: false, data: [] }));
+  // Agrupa por estado
+  const estadosMap = {};
+  (okP ? dataPrest : []).forEach(p => {
+    estadosMap[p.estado] = (estadosMap[p.estado] || 0) + 1;
+  });
+
+  if (CC.prestEstado) CC.prestEstado.destroy();
+  CC.prestEstado = new Chart(document.getElementById('cPrestEstado'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(estadosMap),
+      datasets: [{
+        label: 'Cantidad',
+        data: Object.values(estadosMap),
+        backgroundColor: 'rgba(168,85,247,0.4)',
+        borderColor: '#a855f7', borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#6b7082' } },
+        y: { ticks: { color: '#6b7082' }, beginAtZero: true }
+      }
+    }
+  });
+
+  // 3. DataTable de movimientos
+  const { ok: okM, data: movs } = await api('/movimientos')
+          .catch(() => ({ ok: false, data: [] }));
+
+  // Destruir tabla anterior si existe (evitar duplicado)
+  if ($.fn.DataTable.isDataTable('#tblMovimientos')) {
+    $('#tblMovimientos').DataTable().destroy();
+  }
+
+  $('#tblMovimientos').DataTable({
+    data: okM ? movs : [],
+    columns: [
+      { data: 'idMovimiento' },
+      { data: 'fechaMovimiento', render: d => fmtD(d) },
+      { data: 'cliente', defaultContent: '-' },
+      { data: 'idCuenta' },
+      { data: 'tipoMovimiento' },
+      { data: 'monto', render: v => fmt(v) }
+    ],
+    dom: 'Bfrtip',   // habilita botones de exportación
+    buttons: ['excelHtml5', 'csvHtml5'],
+    language: {
+      url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json'
+    },
+    pageLength: 10,
+    order: [[0, 'desc']]
+  });
+}
 // ── DASHBOARD ──
 async function loadDash(){
   const {ok,data}=await api('/movimientos').catch(()=>({ok:false}));
