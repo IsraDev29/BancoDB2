@@ -2007,29 +2007,10 @@ async function crearCliente(){
 
 // ── CUENTAS ──
 async function cargarCuentas(){
-  const path=S.rol==='CAJERO'?'/cuentas':`/cuentas/${S.id}`;
-  const {ok,status,data}=await api(path).catch(()=>({ok:false,status:0,data:{}}));
-  if(!ok){
-    document.getElementById('cuentasCards').innerHTML='';
-    ['filtroMovCuenta','depCuenta','retCuenta','trfOrigen','trfDestino'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el){
-        el.innerHTML = id==='filtroMovCuenta'
-          ? '<option value="">Todas las cuentas</option>'
-          : '<option value="">Sin cuentas disponibles</option>';
-      }
-    });
-    if(status===404){
-      toast('No hay cuentas registradas para este cliente','error');
-    }else{
-      toast(data.message||'No se pudieron cargar las cuentas','error');
-    }
-    cargarHistorial();
-    return;
-  }
-  const ctas=Array.isArray(data)?data:[];
-  const opciones='<option value="">Seleccione una cuenta</option>'+ctas.map(c=>`<option value="${c.idCuenta}">${c.numeroCuenta} (ID ${c.idCuenta})</option>`).join('');
-  document.getElementById('cuentasCards').innerHTML=ctas.map(c=>`
+  const renderCuentas=(ctas, mensaje='')=>{
+    const cuentas=Array.isArray(ctas)?ctas:[];
+    const opciones='<option value="">Seleccione una cuenta</option>'+cuentas.map(c=>`<option value="${c.idCuenta}">${c.numeroCuenta} (ID ${c.idCuenta})</option>`).join('');
+    document.getElementById('cuentasCards').innerHTML=cuentas.map(c=>`
     <div class="account-card">
       <div class="card-chip"><span></span><span></span><span></span><span></span></div>
       <div style="font-family:var(--fm);letter-spacing:2px;color:var(--muted2);font-size:15px;margin-bottom:16px;">${c.numeroCuenta}</div>
@@ -2038,13 +2019,38 @@ async function cargarCuentas(){
       <div style="display:flex;justify-content:space-between;margin-top:18px;font-size:11px;color:var(--muted);">
         <span>ID ${c.idCuenta}</span><span>${c.tipoCuenta||'Corriente'}</span><span>${badge(c.estado||'Activa')}</span>
       </div>
-    </div>`).join('');
-  const sel=document.getElementById('filtroMovCuenta');
-  if(sel) sel.innerHTML='<option value="">Todas las cuentas</option>'+ctas.map(c=>`<option value="${c.idCuenta}">${c.numeroCuenta}</option>`).join('');
-  ['depCuenta','retCuenta','trfOrigen','trfDestino'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.innerHTML=opciones;
-  });
+    </div>`).join('') || (mensaje ? `<div class="empty-state">${mensaje}</div>` : '');
+    const sel=document.getElementById('filtroMovCuenta');
+    if(sel) sel.innerHTML='<option value="">Todas las cuentas</option>'+cuentas.map(c=>`<option value="${c.idCuenta}">${c.numeroCuenta}</option>`).join('');
+    ['depCuenta','retCuenta','trfOrigen','trfDestino'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.innerHTML=opciones;
+    });
+  };
+
+  const path=S.rol==='CAJERO'?'/cuentas':`/cuentas/${S.id}`;
+  const res=await api(path).catch(()=>({ok:false,status:0,data:{}}));
+  if(res.ok){
+    const ctas=Array.isArray(res.data)?res.data:[];
+    if(ctas.length){
+      renderCuentas(ctas);
+      cargarHistorial();
+      return;
+    }
+  }
+
+  if(S.rol==='CLIENTE'){
+    const fallback=await api('/cuentas').catch(()=>({ok:false,status:0,data:{}}));
+    if(fallback.ok && Array.isArray(fallback.data) && fallback.data.length){
+      renderCuentas(fallback.data);
+      toast('No había cuentas asociadas al cliente; se mostraron cuentas disponibles.','error');
+      cargarHistorial();
+      return;
+    }
+  }
+
+  renderCuentas([], 'No hay cuentas para mostrar');
+  toast('No se pudieron cargar las cuentas','error');
   cargarHistorial();
 }
 async function cargarHistorial(){
