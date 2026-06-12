@@ -32,7 +32,9 @@ public partial class BancoContext : DbContext
         mb.Entity<Cliente>(e =>
         {
             e.HasKey(c => c.IdCliente);
-            e.ToTable("Clientes");
+            // Fusionamos el nombre de la tabla y su trigger en una sola línea
+            e.ToTable("Clientes", tb => tb.HasTrigger("TR_Auditoria_Clientes"));
+            
             e.HasIndex(c => c.Cedula).IsUnique();
             e.Property(c => c.Cedula).HasMaxLength(20);
             e.Property(c => c.Nombre).HasMaxLength(100);
@@ -47,7 +49,9 @@ public partial class BancoContext : DbContext
         mb.Entity<Cuenta>(e =>
         {
             e.HasKey(c => c.IdCuenta);
-            e.ToTable("Cuentas");
+            // Fusionamos el nombre de la tabla y su trigger
+            e.ToTable("Cuentas", tb => tb.HasTrigger("TR_Auditoria_Cuentas"));
+            
             e.HasIndex(c => c.NumeroCuenta).IsUnique();
             e.Property(c => c.NumeroCuenta).HasMaxLength(20);
             e.Property(c => c.TipoCuenta).HasMaxLength(50);
@@ -65,7 +69,9 @@ public partial class BancoContext : DbContext
         mb.Entity<Movimiento>(e =>
         {
             e.HasKey(m => m.IdMovimiento);
-            e.ToTable("Movimientos");
+            // Fusionamos el nombre de la tabla y su trigger
+            e.ToTable("Movimientos", tb => tb.HasTrigger("TR_Auditoria_Movimientos"));
+            
             e.Property(m => m.IdMovimiento).ValueGeneratedOnAdd();
             e.Property(m => m.TipoMovimiento).HasMaxLength(50);
             e.Property(m => m.Monto).HasColumnType("decimal(18,2)");
@@ -82,7 +88,9 @@ public partial class BancoContext : DbContext
         mb.Entity<Prestamo>(e =>
         {
             e.HasKey(p => p.IdPrestamo);
-            e.ToTable("Prestamos");
+            // Agregamos el blindaje también a Préstamos por si acaso
+            e.ToTable("Prestamos", tb => tb.HasTrigger("TR_Auditoria_Prestamos"));
+            
             e.Property(p => p.Monto).HasColumnType("decimal(18,2)");
             e.Property(p => p.TasaInteres).HasColumnType("decimal(5,2)");
             e.Property(p => p.CuotaMensual).HasColumnType("decimal(18,2)");
@@ -99,7 +107,9 @@ public partial class BancoContext : DbContext
         mb.Entity<Tarjeta>(e =>
         {
             e.HasKey(t => t.IdTarjeta);
-            e.ToTable("Tarjetas");
+            // Agregamos el blindaje definitivo a Tarjetas
+            e.ToTable("Tarjetas", tb => tb.HasTrigger("TR_Auditoria_Tarjetas"));
+            
             e.Property(t => t.NumeroTarjeta).HasMaxLength(30);
             e.Property(t => t.TipoTarjeta).HasMaxLength(30);
             e.Property(t => t.LimiteCredito).HasColumnType("decimal(18,2)");

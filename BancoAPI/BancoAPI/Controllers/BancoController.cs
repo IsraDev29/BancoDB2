@@ -93,7 +93,8 @@ public class BancoController : ControllerBase
             {
                 if (!string.IsNullOrEmpty(req.Correo)) nuevo.Correo = req.Correo;
                 if (!string.IsNullOrEmpty(req.Direccion)) nuevo.Direccion = req.Direccion;
-                _db.SaveChanges();
+                
+                _db.SaveChanges(); 
             }
             return Ok(new
             {

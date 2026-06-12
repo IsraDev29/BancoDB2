@@ -27,8 +27,8 @@ public class PowerBIController : ControllerBase
             Proyecto = "BANCO_BIGDATA",
             ReporteNombre = "BancoDB_Dashboard",
             ReportId = "87444550-a83e-424d-9990-5a365ee00131",
-            UrlAcceso = "https://app.powerbi.com/groups/me/reports/87444550-a83e-424d-9990-5a365ee00131/bbdc8355815ae492d0b4?experience=power-bi",
-            UrlEmbed = "https://app.powerbi.com/groups/me/reports/87444550-a83e-424d-9990-5a365ee00131/bbdc8355815ae492d0b4?experience=power-bi",
+            UrlAcceso = "http://localhost:3000/public/dashboard/812eb85e-3914-4807-a42e-19b6dac1608b",
+            UrlEmbed = "http://localhost:3000/public/dashboard/812eb85e-3914-4807-a42e-19b6dac1608b",
             AutoRefreshMs = 60000
         };
 
