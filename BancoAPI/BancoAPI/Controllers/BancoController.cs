@@ -118,13 +118,13 @@ public class BancoController : ControllerBase
                 .Join(_db.Clientes,
                     cu => cu.IdCliente, c => c.IdCliente,
                     (cu, c) => new {
-                        cu.IdCuenta,
-                        cu.NumeroCuenta,
-                        cu.TipoCuenta,
-                        cu.Saldo,
-                        cu.Estado,
-                        cu.IdCliente,
-                        NombreCliente = (c.Nombre ?? "") + " " + (c.Apellido ?? "")
+                        idCuenta = cu.IdCuenta,
+                        numeroCuenta = cu.NumeroCuenta,
+                        tipoCuenta = cu.TipoCuenta,
+                        saldo = cu.Saldo,
+                        estado = cu.Estado,
+                        idCliente = cu.IdCliente,
+                        nombreCliente = (c.Nombre ?? "") + " " + (c.Apellido ?? "")
                     })
                 .ToList();
             return Ok(lista);
@@ -135,7 +135,18 @@ public class BancoController : ControllerBase
     [HttpGet("cuentas/{idCliente}")]
     public IActionResult GetCuentas(int idCliente)
     {
-        var lista = _db.Cuentas.Where(c => c.IdCliente == idCliente).ToList();
+        var lista = _db.Cuentas
+            .Where(c => c.IdCliente == idCliente)
+            .Select(c => new
+            {
+                idCuenta = c.IdCuenta,
+                numeroCuenta = c.NumeroCuenta,
+                tipoCuenta = c.TipoCuenta,
+                saldo = c.Saldo,
+                estado = c.Estado,
+                idCliente = c.IdCliente
+            })
+            .ToList();
         if (!lista.Any())
             return NotFound(new { message = "El cliente no tiene cuentas activas." });
         return Ok(lista);
@@ -153,7 +164,7 @@ public class BancoController : ControllerBase
             {
                 NumeroCuenta = numero,
                 TipoCuenta = req.TipoCuenta ?? "Corriente",
-                Saldo = req.DepositoInicial,
+                Saldo = 0m,
                 Estado = "Activa",
                 IdCliente = req.IdCliente
             };
@@ -213,6 +224,8 @@ public class BancoController : ControllerBase
     {
         if (req.Monto <= 0)
             return BadRequest(new { success = false, message = "El monto debe ser mayor a cero." });
+        if (req.IdCuenta <= 0)
+            return BadRequest(new { success = false, message = "El ID de cuenta es inválido." });
         if (!_db.Cuentas.Any(c => c.IdCuenta == req.IdCuenta))
             return NotFound(new { success = false, message = "La cuenta no existe." });
         try
@@ -228,6 +241,8 @@ public class BancoController : ControllerBase
     {
         if (req.Monto <= 0)
             return BadRequest(new { success = false, message = "El monto debe ser mayor a cero." });
+        if (req.IdCuenta <= 0)
+            return BadRequest(new { success = false, message = "El ID de cuenta es inválido." });
         var cuenta = _db.Cuentas.Find(req.IdCuenta);
         if (cuenta == null)
             return NotFound(new { success = false, message = "La cuenta no existe." });
@@ -246,6 +261,8 @@ public class BancoController : ControllerBase
     {
         if (req.Monto <= 0)
             return BadRequest(new { success = false, message = "El monto debe ser mayor a cero." });
+        if (req.IdCuentaOrigen <= 0 || req.IdCuentaDestino <= 0)
+            return BadRequest(new { success = false, message = "Los IDs de cuenta son inválidos." });
         if (req.IdCuentaOrigen == req.IdCuentaDestino)
             return BadRequest(new { success = false, message = "Origen y destino iguales." });
         var origen = _db.Cuentas.Find(req.IdCuentaOrigen);
