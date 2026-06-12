@@ -1,6 +1,32 @@
 @BancoAPI_HostAddress = http://localhost:5080
 
-GET {{BancoAPI_HostAddress}}/weatherforecast/
+GET {{BancoAPI_HostAddress}}/api/Banco/clientes
 Accept: application/json
+
+###
+
+GET {{BancoAPI_HostAddress}}/api/Banco/cuentas
+Accept: application/json
+
+###
+
+POST {{BancoAPI_HostAddress}}/api/Banco/deposito
+Content-Type: application/json
+
+{
+  "idCuenta": 1,
+  "monto": 100
+}
+
+###
+
+POST {{BancoAPI_HostAddress}}/api/Banco/transferencia
+Content-Type: application/json
+
+{
+  "idCuentaOrigen": 1,
+  "idCuentaDestino": 2,
+  "monto": 50
+}
 
 ###

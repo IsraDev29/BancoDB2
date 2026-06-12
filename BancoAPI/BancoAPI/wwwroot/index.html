@@ -2000,8 +2000,20 @@ async function crearCliente(){
 // ── CUENTAS ──
 async function cargarCuentas(){
   const path=S.rol==='CAJERO'?'/cuentas':`/cuentas/${S.id}`;
-  const {ok,data}=await api(path).catch(()=>({ok:false}));
-  const ctas=ok?data:mockCuentas(S.id||1);
+  const {ok,status,data}=await api(path).catch(()=>({ok:false,status:0,data:{}}));
+  if(!ok){
+    document.getElementById('cuentasCards').innerHTML='';
+    const sel=document.getElementById('filtroMovCuenta');
+    if(sel) sel.innerHTML='<option value="">Todas las cuentas</option>';
+    if(status===404){
+      toast('No hay cuentas registradas para este cliente','error');
+    }else{
+      toast(data.message||'No se pudieron cargar las cuentas','error');
+    }
+    cargarHistorial();
+    return;
+  }
+  const ctas=Array.isArray(data)?data:[];
   document.getElementById('cuentasCards').innerHTML=ctas.map(c=>`
     <div class="account-card">
       <div class="card-chip"><span></span><span></span><span></span><span></span></div>

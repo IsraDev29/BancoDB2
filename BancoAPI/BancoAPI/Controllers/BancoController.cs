@@ -196,7 +196,17 @@ public class BancoController : ControllerBase
         {
             var movs = _db.Movimientos
                 .OrderByDescending(m => m.FechaMovimiento)
-                .Take(20).ToList();
+                .Take(20)
+                .Select(m => new
+                {
+                    idMovimiento = m.IdMovimiento,
+                    fechaMovimiento = m.FechaMovimiento,
+                    tipoMovimiento = m.TipoMovimiento,
+                    monto = m.Monto,
+                    descripcion = m.Descripcion,
+                    idCuenta = m.IdCuenta
+                })
+                .ToList();
             return Ok(movs);
         }
         catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
@@ -210,7 +220,17 @@ public class BancoController : ControllerBase
             var movs = _db.Movimientos
                 .Where(m => m.IdCuenta == idCuenta)
                 .OrderByDescending(m => m.FechaMovimiento)
-                .Take(50).ToList();
+                .Take(50)
+                .Select(m => new
+                {
+                    idMovimiento = m.IdMovimiento,
+                    fechaMovimiento = m.FechaMovimiento,
+                    tipoMovimiento = m.TipoMovimiento,
+                    monto = m.Monto,
+                    descripcion = m.Descripcion,
+                    idCuenta = m.IdCuenta
+                })
+                .ToList();
             return Ok(movs);
         }
         catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
