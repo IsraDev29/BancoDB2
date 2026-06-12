@@ -1142,22 +1142,30 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
           </div>
           <div id="trans-deposito">
             <div class="form-card"><h3>Realizar depósito</h3>
-              <div class="field"><label>ID de cuenta destino</label><input type="number" id="depCuenta" placeholder="Ej. 1"></div>
+              <div class="field"><label>Cuenta destino</label>
+                <select id="depCuenta"></select>
+              </div>
               <div class="field"><label>Monto ($)</label><input type="number" id="depMonto" placeholder="0.00" min="0.01" step="0.01"></div>
               <button class="btn btn-primary" id="btnDep" onclick="doDeposito()">Confirmar depósito</button>
             </div>
           </div>
-          <div id="trans-retiro" style="display:none;">                                                                                               
+          <div id="trans-retiro" style="display:none;">                                                                                              
             <div class="form-card"><h3>Realizar retiro</h3>
-              <div class="field"><label>ID de cuenta</label><input type="number" id="retCuenta" placeholder="Ej. 1"></div>
+              <div class="field"><label>Cuenta</label>
+                <select id="retCuenta"></select>
+              </div>
               <div class="field"><label>Monto ($)</label><input type="number" id="retMonto" placeholder="0.00" min="0.01" step="0.01"></div>
               <button class="btn btn-primary" id="btnRet" onclick="doRetiro()">Confirmar retiro</button>
             </div>
           </div>
           <div id="trans-transferencia" style="display:none;">
             <div class="form-card"><h3>Transferencia entre cuentas</h3>
-              <div class="field"><label>Cuenta origen (ID)</label><input type="number" id="trfOrigen" placeholder="Ej. 1"></div>
-              <div class="field"><label>Cuenta destino (ID)</label><input type="number" id="trfDestino" placeholder="Ej. 2"></div>
+              <div class="field"><label>Cuenta origen</label>
+                <select id="trfOrigen"></select>
+              </div>
+              <div class="field"><label>Cuenta destino</label>
+                <select id="trfDestino"></select>
+              </div>
               <div class="field"><label>Monto ($)</label><input type="number" id="trfMonto" placeholder="0.00" min="0.01" step="0.01"></div>
               <button class="btn btn-primary" id="btnTrf" onclick="doTransferencia()">Ejecutar transferencia</button>
             </div>
@@ -2003,8 +2011,14 @@ async function cargarCuentas(){
   const {ok,status,data}=await api(path).catch(()=>({ok:false,status:0,data:{}}));
   if(!ok){
     document.getElementById('cuentasCards').innerHTML='';
-    const sel=document.getElementById('filtroMovCuenta');
-    if(sel) sel.innerHTML='<option value="">Todas las cuentas</option>';
+    ['filtroMovCuenta','depCuenta','retCuenta','trfOrigen','trfDestino'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){
+        el.innerHTML = id==='filtroMovCuenta'
+          ? '<option value="">Todas las cuentas</option>'
+          : '<option value="">Sin cuentas disponibles</option>';
+      }
+    });
     if(status===404){
       toast('No hay cuentas registradas para este cliente','error');
     }else{
@@ -2014,6 +2028,7 @@ async function cargarCuentas(){
     return;
   }
   const ctas=Array.isArray(data)?data:[];
+  const opciones='<option value="">Seleccione una cuenta</option>'+ctas.map(c=>`<option value="${c.idCuenta}">${c.numeroCuenta} (ID ${c.idCuenta})</option>`).join('');
   document.getElementById('cuentasCards').innerHTML=ctas.map(c=>`
     <div class="account-card">
       <div class="card-chip"><span></span><span></span><span></span><span></span></div>
@@ -2025,7 +2040,11 @@ async function cargarCuentas(){
       </div>
     </div>`).join('');
   const sel=document.getElementById('filtroMovCuenta');
-  sel.innerHTML='<option value="">Todas las cuentas</option>'+ctas.map(c=>`<option value="${c.idCuenta}">${c.numeroCuenta}</option>`).join('');
+  if(sel) sel.innerHTML='<option value="">Todas las cuentas</option>'+ctas.map(c=>`<option value="${c.idCuenta}">${c.numeroCuenta}</option>`).join('');
+  ['depCuenta','retCuenta','trfOrigen','trfDestino'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=opciones;
+  });
   cargarHistorial();
 }
 async function cargarHistorial(){
